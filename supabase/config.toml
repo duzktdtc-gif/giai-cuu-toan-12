@@ -1,0 +1,7 @@
+project_id = "giai-cuu-toan-12"
+
+[functions.game-sync]
+verify_jwt = false
+
+[functions.teacher]
+verify_jwt = false

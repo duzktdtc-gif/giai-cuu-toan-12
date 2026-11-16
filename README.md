@@ -217,6 +217,24 @@ Khi build production, khai báo đúng hai biến này trong phần Environment 
 
 > Supabase Edge Functions chạy độc lập trên Supabase, không deploy cùng frontend. Sau khi deploy frontend, nhớ cấu hình CORS nếu thay đổi domain (hiện tại function cho phép `*`).
 
+### GitHub Pages (đang dùng)
+
+Repo này được deploy tự động lên GitHub Pages:
+
+- URL: https://duzktdtc-gif.github.io/giai-cuu-toan-12/
+- Workflow: `.github/workflows/deploy-pages.yml`, chạy khi push lên `main` hoặc bấm chạy tay.
+- Mỗi lần deploy sẽ: cài dependency → chạy unit test → build → upload `dist` → deploy.
+- Khi chạy trong GitHub Actions, Vite tự dùng base `/giai-cuu-toan-12/`; khi chạy local/Vercel/Netlify vẫn dùng base `/`.
+
+Để bật Supabase cho bản GitHub Pages, vào *Settings → Secrets and variables → Actions → Variables* và thêm:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Sau đó chạy lại workflow (hoặc push một commit mới). Nếu để trống, bản deploy vẫn chơi offline và khu vực giáo viên sẽ báo chưa cấu hình.
+
+> GitHub Pages miễn phí yêu cầu repo **public**. Nếu chuyển repo về private trên tài khoản free, trang sẽ ngừng hoạt động; khi đó dùng Vercel/Netlify hoặc GitHub Pro.
+
 ---
 
 ## 8. Luật chơi và cách lưu dữ liệu

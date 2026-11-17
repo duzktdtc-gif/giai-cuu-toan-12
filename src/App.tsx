@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Avatar } from "./game/levels";
-import { startNewRun } from "./game/session";
+import { loadBank } from "./game/bank";
+import type { BankQuestion, GameResultView } from "./game/types";
 import type { StudentProfile } from "./lib/models";
 import {
   displayClass,
@@ -11,25 +12,18 @@ import {
   stableUuid,
 } from "./lib/normalize";
 import { loadProfile, saveProfile } from "./lib/storage";
-import { bootstrapStudent } from "./lib/sync";
 import { MenuScreen } from "./screens/MenuScreen";
-import { StoryScreen } from "./screens/StoryScreen";
+import { LevelSelectScreen } from "./screens/LevelSelectScreen";
 import { GameScreen } from "./screens/GameScreen";
 import { GameOverScreen, VictoryScreen } from "./screens/EndScreens";
 import { TeacherScreen } from "./screens/TeacherScreen";
 
-type Screen = "menu" | "story" | "game" | "gameover" | "victory" | "teacher";
+type Screen = "menu" | "select" | "game" | "result" | "teacher";
 
 interface StartValues {
   name: string;
   className: string;
   avatar: Avatar;
-  restart: boolean;
-}
-
-interface GameOverState {
-  lostLevel: number;
-  cleared: number;
 }
 
 export default function App() {
@@ -37,7 +31,12 @@ export default function App() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [gameOver, setGameOver] = useState<GameOverState>({ lostLevel: 1, cleared: 0 });
+  const [level, setLevel] = useState<1 | 2>(1);
+  const [bank, setBank] = useState<BankQuestion[] | null>(null);
+  const [loadingLevel, setLoadingLevel] = useState<1 | 2 | null>(null);
+  const [selectError, setSelectError] = useState<string | null>(null);
+  const [result, setResult] = useState<GameResultView | null>(null);
+  const [runKey, setRunKey] = useState(0);
 
   async function handleStart(values: StartValues) {
     setBusy(true);
@@ -48,59 +47,35 @@ export default function App() {
       const id = await stableUuid(identitySeed(readable, className));
       const now = new Date().toISOString();
       const existing = loadProfile(id);
-      let base: StudentProfile = existing
+      const base: StudentProfile = existing
         ? {
             ...existing,
             name: readable,
+            nameNormalized: normalizeName(readable),
             className,
+            classNormalized: normalizeClass(className),
             avatar: values.avatar,
+            runsByLevel: existing.runsByLevel ?? {},
+            winsByLevel: existing.winsByLevel ?? {},
           }
         : {
             id,
             name: readable,
-            nameNormalized: "",
+            nameNormalized: normalizeName(readable),
             className,
-            classNormalized: "",
+            classNormalized: normalizeClass(className),
             avatar: values.avatar,
-            maxLevel: 0,
-            totalWrong: 0,
             sessionsCount: 0,
             createdAt: now,
             lastPlayed: now,
+            runsByLevel: {},
+            winsByLevel: {},
           };
-      base = {
-        ...base,
-        name: readable,
-        nameNormalized: normalizeName(readable),
-        className,
-        classNormalized: normalizeClass(className),
-      };
-
-      if (!values.restart) {
-        const serverMax = await Promise.race([
-          bootstrapStudent(base),
-          new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 2500)),
-        ]);
-        if (serverMax !== null && serverMax > base.maxLevel) base = { ...base, maxLevel: serverMax };
-      }
-
       saveProfile(base);
-
-      if (!values.restart && base.activeRun && base.activeRun.lives > 0) {
-        setProfile(base);
-        setScreen("game");
-        return;
-      }
-
-      let startLevel = 1;
-      if (!values.restart && base.maxLevel > 0 && base.maxLevel < 7) startLevel = base.maxLevel + 1;
-      const next = startNewRun(base, startLevel);
-      setProfile(next);
-      if (!values.restart && startLevel > 1) {
-        setScreen("game");
-      } else {
-        setScreen("story");
-      }
+      setProfile(base);
+      setResult(null);
+      setSelectError(null);
+      setScreen("select");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không bắt đầu được. Vui lòng thử lại.");
     } finally {
@@ -108,66 +83,90 @@ export default function App() {
     }
   }
 
+  async function handleSelectLevel(nextLevel: 1 | 2) {
+    setLoadingLevel(nextLevel);
+    setSelectError(null);
+    try {
+      const loaded = await loadBank(nextLevel);
+      setBank(loaded);
+      setLevel(nextLevel);
+      setResult(null);
+      setRunKey((value) => value + 1);
+      setScreen("game");
+    } catch (err) {
+      setSelectError(err instanceof Error ? err.message : "Không tải được đề. Vui lòng thử lại.");
+    } finally {
+      setLoadingLevel(null);
+    }
+  }
+
+  function handleFinish(next: StudentProfile, nextResult: GameResultView) {
+    setProfile(next);
+    setResult(nextResult);
+    setScreen("result");
+  }
+
   function handleQuit(next: StudentProfile) {
     setProfile(next);
-    setScreen("menu");
+    setScreen("select");
   }
 
-  function handleGameOver(next: StudentProfile, lostLevel: number, cleared: number) {
-    setProfile(next);
-    setGameOver({ lostLevel, cleared });
-    setScreen("gameover");
-  }
-
-  function handleVictory(next: StudentProfile) {
-    setProfile(next);
-    setScreen("victory");
-  }
-
-  function replay(lostLevel: number, showStory: boolean) {
-    if (!profile) return;
-    const next = startNewRun(profile, lostLevel);
-    setProfile(next);
-    setScreen(showStory ? "story" : "game");
+  function handleReplay() {
+    if (!bank) {
+      setScreen("select");
+      return;
+    }
+    setRunKey((value) => value + 1);
+    setScreen("game");
   }
 
   if (screen === "teacher") {
     return <TeacherScreen onBack={() => setScreen("menu")} />;
   }
 
-  if (screen === "story" && profile) {
-    const startLevel = profile.activeRun?.level ?? 1;
-    return <StoryScreen avatar={profile.avatar} startLevel={startLevel} onDone={() => setScreen("game")} />;
-  }
-
-  if (screen === "game" && profile?.activeRun) {
+  if (screen === "select" && profile) {
     return (
-      <GameScreen
-        initialProfile={profile}
-        onQuit={handleQuit}
-        onVictory={handleVictory}
-        onGameOver={handleGameOver}
+      <LevelSelectScreen
+        profile={profile}
+        loadingLevel={loadingLevel}
+        error={selectError}
+        onSelect={(nextLevel) => void handleSelectLevel(nextLevel)}
+        onBack={() => setScreen("menu")}
       />
     );
   }
 
-  if (screen === "gameover" && profile) {
+  if (screen === "game" && profile && bank) {
+    return (
+      <GameScreen
+        key={`${level}-${runKey}`}
+        profile={profile}
+        level={level}
+        bank={bank}
+        onFinish={handleFinish}
+        onQuit={handleQuit}
+      />
+    );
+  }
+
+  if (screen === "result" && profile && result) {
+    if (result.result === "win") {
+      return (
+        <VictoryScreen
+          profile={profile}
+          result={result}
+          onReplay={handleReplay}
+          onChoose={() => setScreen("select")}
+          onMenu={() => setScreen("menu")}
+        />
+      );
+    }
     return (
       <GameOverScreen
         profile={profile}
-        lostLevel={gameOver.lostLevel}
-        cleared={gameOver.cleared}
-        onReplay={() => replay(gameOver.lostLevel, false)}
-        onMenu={() => setScreen("menu")}
-      />
-    );
-  }
-
-  if (screen === "victory" && profile) {
-    return (
-      <VictoryScreen
-        profile={profile}
-        onReplay={() => replay(1, true)}
+        result={result}
+        onReplay={handleReplay}
+        onChoose={() => setScreen("select")}
         onMenu={() => setScreen("menu")}
       />
     );

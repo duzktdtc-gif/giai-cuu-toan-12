@@ -1,54 +1,63 @@
+import type { PreparedQuestion, RunResult } from "../game/types";
 import type {
-  ActiveRun,
   AttemptRecord,
   SessionRecord,
   SessionResult,
+  StudentIdentity,
   StudentProfile,
 } from "../lib/models";
-import type { PlayableQuestion as Question } from "../questions/types";
 import { enqueue, saveProfile } from "../lib/storage";
 import { requestSync } from "../lib/sync";
+
+export interface RunContext {
+  id: string;
+  level: 1 | 2;
+  startedAt: string;
+}
+
+export interface RunTotals {
+  totalTimeMs: number;
+  wrongCount: number;
+  correctCount: number;
+  clearedCount: number;
+}
+
+export interface RecordAttemptInput {
+  profile: StudentProfile;
+  run: RunContext;
+  question: PreparedQuestion;
+  chosenIndex: number;
+  chosenText: string;
+  livesLeft: number;
+  timeSpentMs: number;
+}
 
 function nowIso(): string {
   return new Date().toISOString();
 }
 
 function randomId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+  const cryptoApi =
+    typeof crypto !== "undefined"
+      ? (crypto as unknown as {
+          randomUUID?: () => string;
+          getRandomValues?: (array: Uint8Array) => Uint8Array;
+        })
+      : null;
+  if (cryptoApi?.randomUUID) return cryptoApi.randomUUID();
+  const bytes = new Uint8Array(16);
+  if (cryptoApi?.getRandomValues) {
+    cryptoApi.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
-function sessionFromRun(profile: StudentProfile, run: ActiveRun, result: SessionResult, endedAt: string | null): SessionRecord {
-  return {
-    id: run.id,
-    studentId: profile.id,
-    startedAt: run.startedAt,
-    endedAt,
-    startLevel: run.startLevel,
-    maxLevel: run.cleared,
-    result,
-    lastActivity: endedAt ?? nowIso(),
-  };
-}
-
-function queueSession(profile: StudentProfile, run: ActiveRun, result: SessionResult, endedAt: string | null): void {
-  enqueue([
-    {
-      kind: "session",
-      student: {
-        id: profile.id,
-        name: profile.name,
-        nameNormalized: profile.nameNormalized,
-        className: profile.className,
-        classNormalized: profile.classNormalized,
-        avatar: profile.avatar,
-      },
-      session: sessionFromRun(profile, run, result, endedAt),
-    },
-  ]);
-}
-
-function studentSnapshot(profile: StudentProfile) {
+function studentSnapshot(profile: StudentProfile): StudentIdentity {
   return {
     id: profile.id,
     name: profile.name,
@@ -59,100 +68,97 @@ function studentSnapshot(profile: StudentProfile) {
   };
 }
 
-/** Bắt đầu lượt chơi mới; lượt đang dở (nếu có) bị đánh dấu abandoned. */
-export function startNewRun(profile: StudentProfile, startLevel: number): StudentProfile {
-  const timestamp = nowIso();
-  if (profile.activeRun) {
-    queueSession(profile, profile.activeRun, "abandoned", timestamp);
-  }
-  const level = Math.min(Math.max(startLevel, 1), 7);
-  const run: ActiveRun = {
-    id: randomId(),
-    level,
-    lives: 3,
-    startedAt: timestamp,
-    cleared: level - 1,
-    startLevel: level,
+function sessionFromRun(
+  profile: StudentProfile,
+  run: RunContext,
+  result: SessionResult,
+  totals: RunTotals,
+  endedAt: string | null,
+): SessionRecord {
+  return {
+    id: run.id,
+    studentId: profile.id,
+    level: run.level,
+    startedAt: run.startedAt,
+    endedAt,
+    totalTimeMs: Math.max(0, Math.round(totals.totalTimeMs)),
+    wrongCount: Math.max(0, Math.round(totals.wrongCount)),
+    correctCount: Math.max(0, Math.round(totals.correctCount)),
+    clearedCount: Math.max(0, Math.min(5, Math.round(totals.clearedCount))),
+    result,
+    lastActivity: endedAt ?? nowIso(),
   };
-  const next: StudentProfile = {
-    ...profile,
-    activeRun: run,
-    sessionsCount: profile.sessionsCount + 1,
-    lastPlayed: timestamp,
-    maxLevel: Math.max(profile.maxLevel, level - 1),
-  };
-  queueSession(next, run, "in_progress", null);
-  saveProfile(next);
-  requestSync();
-  return next;
 }
 
-/** Ghi nhận một lượt trả lời (đúng hoặc sai) và cập nhật tiến trình. */
-export function recordAttempt(
-  profile: StudentProfile,
-  question: Question,
-  givenAnswer: string,
-  isCorrect: boolean,
-  livesLeft: number,
-  timeSpentMs: number,
-): { profile: StudentProfile; attempt: AttemptRecord } {
-  const run = profile.activeRun;
-  if (!run) throw new Error("Không có lượt chơi đang hoạt động");
-  const timestamp = nowIso();
+/** Bắt đầu một lượt mới. Không lưu tiến trình giữa chừng. */
+export function createRun(level: 1 | 2): RunContext {
+  return { id: randomId(), level, startedAt: nowIso() };
+}
+
+/** Ghi nhận một lần trả lời; Edge Function sẽ tự tạo session nếu chưa có. */
+export function recordAttempt(input: RecordAttemptInput): AttemptRecord {
+  const { profile, run, question, chosenIndex, chosenText, livesLeft, timeSpentMs } = input;
+  const isCorrect = chosenIndex === question.correctIndex;
   const attempt: AttemptRecord = {
     id: randomId(),
     sessionId: run.id,
     studentId: profile.id,
-    level: question.level,
-    templateId: question.templateId,
-    kind: question.kind,
-    params: question.params,
-    questionText: question.prompt,
-    choices: question.choices ?? null,
-    givenAnswer,
-    correctAnswer: question.answerLatex,
+    level: run.level,
+    questionId: question.id,
+    isSimilar: question.isSimilar,
+    questionText: question.stem,
+    options: question.options,
+    chosenIndex,
+    chosenText,
+    correctIndex: question.correctIndex,
+    correctText: question.options[question.correctIndex],
     isCorrect,
-    livesLeft,
+    livesLeft: Math.max(0, livesLeft),
     timeSpentMs: Math.max(0, Math.round(timeSpentMs)),
-    createdAt: timestamp,
+    createdAt: nowIso(),
   };
-  const cleared = isCorrect ? Math.max(run.cleared, run.level) : run.cleared;
-  const nextRun: ActiveRun = { ...run, lives: livesLeft, cleared };
+  enqueue([{ kind: "attempt", student: studentSnapshot(profile), attempt }]);
+  requestSync();
+  return attempt;
+}
+
+function endRun(
+  profile: StudentProfile,
+  run: RunContext,
+  result: SessionResult,
+  totals: RunTotals,
+): StudentProfile {
+  const timestamp = nowIso();
+  const runsByLevel = { ...profile.runsByLevel, [run.level]: (profile.runsByLevel[run.level] ?? 0) + 1 };
+  const winsByLevel = {
+    ...profile.winsByLevel,
+    [run.level]: (profile.winsByLevel[run.level] ?? 0) + (result === "win" ? 1 : 0),
+  };
   const next: StudentProfile = {
     ...profile,
-    activeRun: nextRun,
-    totalWrong: profile.totalWrong + (isCorrect ? 0 : 1),
-    maxLevel: Math.max(profile.maxLevel, cleared),
+    sessionsCount: profile.sessionsCount + 1,
+    runsByLevel,
+    winsByLevel,
     lastPlayed: timestamp,
   };
-  enqueue([
-    { kind: "attempt", student: studentSnapshot(next), attempt },
-    { kind: "session", student: studentSnapshot(next), session: sessionFromRun(next, nextRun, "in_progress", null) },
-  ]);
-  saveProfile(next);
-  requestSync();
-  return { profile: next, attempt };
-}
-
-/** Sang màn kế tiếp sau khi hạ quái vật. */
-export function advanceLevel(profile: StudentProfile): StudentProfile {
-  const run = profile.activeRun;
-  if (!run || run.level >= 7) return profile;
-  const nextRun: ActiveRun = { ...run, level: run.level + 1 };
-  const next: StudentProfile = { ...profile, activeRun: nextRun };
-  queueSession(next, nextRun, "in_progress", null);
-  saveProfile(next);
-  requestSync();
-  return next;
-}
-
-/** Kết thúc lượt chơi (victory / game_over) và xoá activeRun. */
-export function finishRun(profile: StudentProfile, result: "victory" | "game_over"): StudentProfile {
-  const run = profile.activeRun;
-  const timestamp = nowIso();
-  if (run) queueSession(profile, run, result, timestamp);
-  const next: StudentProfile = { ...profile, activeRun: undefined, lastPlayed: timestamp };
+  const session = sessionFromRun(profile, run, result, totals, timestamp);
+  enqueue([{ kind: "session", student: studentSnapshot(next), session }]);
   saveProfile(next);
   requestSync(150);
   return next;
+}
+
+/** Kết thúc lượt với thắng/thua và cập nhật thống kê cục bộ. */
+export function finishRun(
+  profile: StudentProfile,
+  run: RunContext,
+  result: RunResult,
+  totals: RunTotals,
+): StudentProfile {
+  return endRun(profile, run, result, totals);
+}
+
+/** Thoát giữa chừng: ghi nhận lượt bỏ dở, không cho tiếp tục. */
+export function abandonRun(profile: StudentProfile, run: RunContext, totals: RunTotals): StudentProfile {
+  return endRun(profile, run, "abandoned", totals);
 }

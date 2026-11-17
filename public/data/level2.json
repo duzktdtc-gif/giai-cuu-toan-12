@@ -1,0 +1,101 @@
+[
+  {
+    "id": "m2-q01",
+    "level": 2,
+    "topic": "hai-duong-thang-vuong-goc",
+    "stem": "Hai đường thẳng được gọi là vuông góc với nhau nếu góc giữa chúng bằng:",
+    "figure": { "type": "lines", "mode": "perpendicular" },
+    "options": ["$0^\\circ$.", "$45^\\circ$.", "$90^\\circ$.", "$180^\\circ$."],
+    "correct": 2,
+    "solution": [
+      "Theo định nghĩa, hai đường thẳng vuông góc với nhau nếu góc giữa chúng bằng $90^\\circ$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false,
+    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m2-q02",
+    "level": 2,
+    "topic": "hai-duong-thang-vuong-goc",
+    "stem": "Trong không gian, hai đường thẳng vuông góc với nhau có thể là hai đường thẳng:",
+    "figure": { "type": "lines", "mode": "skew" },
+    "options": [
+      "Chỉ cắt nhau.",
+      "Chỉ chéo nhau.",
+      "Cắt nhau hoặc chéo nhau.",
+      "Song song với nhau."
+    ],
+    "correct": 2,
+    "solution": [
+      "Hai đường thẳng vuông góc có thể cắt nhau tại một điểm (vuông góc tại giao điểm) hoặc chéo nhau (góc giữa chúng bằng $90^\\circ$)."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false,
+    "note": "Phương án nhiễu được viết lại để chỉ còn một đáp án đúng; lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m2-q03",
+    "level": 2,
+    "topic": "goc-hai-duong-thang-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Góc giữa hai đường thẳng $AB$ và $B'C'$ bằng:",
+    "figure": { "type": "cube", "highlight": ["AB", "B'C'"] },
+    "options": ["$30^\\circ$.", "$45^\\circ$.", "$60^\\circ$.", "$90^\\circ$."],
+    "correct": 3,
+    "solution": [
+      "Trong hình lập phương, $AB \\parallel A'B'$ và $A'B' \\perp B'C'$ (hai cạnh kề của hình vuông $A'B'C'D'$).",
+      "Do đó $AB \\perp B'C'$, hay góc giữa chúng bằng $90^\\circ$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false,
+    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m2-q04",
+    "level": 2,
+    "topic": "quan-he-vuong-goc-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Khẳng định nào sau đây đúng?",
+    "figure": { "type": "cube", "highlight": ["AD'", "B'C"] },
+    "options": [
+      "$AD' \\perp B'C$.",
+      "$AB \\parallel AD$.",
+      "$AB \\perp A'B'$.",
+      "$AB \\parallel CC'$."
+    ],
+    "correct": 0,
+    "solution": [
+      "Chọn hệ trục tọa độ với $A(0;0;0)$, $B(1;0;0)$, $D(0;1;0)$, $A'(0;0;1)$.",
+      "Khi đó $\\overrightarrow{AD'} = (0;1;1)$ và $\\overrightarrow{B'C} = (0;1;-1)$.",
+      "Tích vô hướng $\\overrightarrow{AD'} \\cdot \\overrightarrow{B'C} = 0 + 1 - 1 = 0$, nên $AD' \\perp B'C$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false,
+    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m2-q05",
+    "level": 2,
+    "topic": "quan-he-song-song-vuong-goc",
+    "stem": "Cho ba đường thẳng $a, b, c$ trong không gian, biết $a \\perp b$ và $b \\parallel c$. Khẳng định nào sau đây đúng?",
+    "figure": { "type": "lines", "mode": "three" },
+    "options": [
+      "$a \\parallel c$.",
+      "$a \\perp c$.",
+      "$a$ và $c$ trùng nhau.",
+      "Không xác định được quan hệ của $a$ và $c$."
+    ],
+    "correct": 1,
+    "solution": [
+      "Vì $b \\parallel c$ nên góc giữa $a$ và $c$ bằng góc giữa $a$ và $b$.",
+      "Mà $a \\perp b$ nên góc giữa $a$ và $b$ bằng $90^\\circ$. Vậy $a \\perp c$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false,
+    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+  }
+]

@@ -1,13 +1,9 @@
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  // GitHub Pages phục vụ tại /<repo>/, còn Vercel/Netlify phục vụ ở gốc.
-  base: process.env.GITHUB_ACTIONS ? "/giai-cuu-toan-12/" : "/",
+  // Dùng đường dẫn tương đối để chạy được cả GitHub Pages (/<repo>/) và tên miền gốc.
+  base: "./",
   plugins: [react(), tailwindcss()],
-  test: {
-    environment: "node",
-    include: ["src/**/*.test.ts"],
-  },
 });

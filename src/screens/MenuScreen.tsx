@@ -8,7 +8,7 @@ import { HeroSprite } from "../components/PixelSprite";
 import { MuteToggle, Button, Badge } from "../components/ui";
 
 interface Props {
-  onStart: (values: { name: string; className: string; avatar: Avatar; restart: boolean }) => Promise<void>;
+  onStart: (values: { name: string; className: string; avatar: Avatar }) => Promise<void>;
   onTeacher: () => void;
   busy: boolean;
   error: string | null;
@@ -35,6 +35,8 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
       try {
         const id = await stableUuid(identitySeed(name, className));
         if (!cancelled) setExisting(loadProfile(id) ?? null);
+      } catch {
+        if (!cancelled) setExisting(null);
       } finally {
         if (!cancelled) setLooking(false);
       }
@@ -45,7 +47,7 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
     };
   }, [name, className]);
 
-  async function submit(restart: boolean) {
+  async function submit() {
     setFormError(null);
     if (displayName(name).length < 2) {
       setFormError("Vui lòng nhập họ tên (ít nhất 2 ký tự).");
@@ -59,11 +61,11 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
       setFormError("Họ tên hoặc lớp quá dài.");
       return;
     }
-    await onStart({ name: displayName(name), className: displayClass(className), avatar, restart });
+    await onStart({ name: displayName(name), className: displayClass(className), avatar });
   }
 
-  const hasProgress = (existing?.maxLevel ?? 0) > 0 || Boolean(existing?.activeRun);
-  const resumeLevel = existing?.activeRun?.level ?? Math.min((existing?.maxLevel ?? 0) + 1, 7);
+  const wins =
+    (existing?.winsByLevel?.["1"] ?? 0) + (existing?.winsByLevel?.["2"] ?? 0);
 
   return (
     <NightScene className="min-h-dvh">
@@ -71,7 +73,7 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-semibold text-lilac-300">
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-gold-400/15 text-lg">⚔️</span>
-            <span className="hidden sm:inline">Toán 12 • GDPT 2018</span>
+            <span className="hidden sm:inline">Toán 12 • Hình học không gian</span>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" className="btn-ghost" onClick={onTeacher}>
@@ -96,11 +98,11 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
           <h1 className="text-balance text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
             Giải cứu Vương quốc
             <span className="block bg-gradient-to-r from-gold-200 via-gold-300 to-gold-500 bg-clip-text text-transparent">
-              Toán học
+              Hình học
             </span>
           </h1>
           <p className="mx-auto mt-3 max-w-md text-pretty text-sm leading-relaxed text-lilac-300 sm:text-base">
-            7 vùng đất, 7 quái vật, 27 dạng bài. Mỗi câu trả lời đúng là một đòn tấn công. Con đã sẵn sàng?
+            2 màn, mỗi lượt 5 câu trắc nghiệm. Con có 2 trái tim và 5 phút để hạ gục quái vật.
           </p>
         </section>
 
@@ -136,7 +138,7 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
               className="mt-5 space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
-                void submit(false);
+                void submit();
               }}
             >
               <div className="grid gap-4 sm:grid-cols-2">
@@ -201,13 +203,12 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
               </div>
 
               {looking ? (
-                <p className="text-xs text-lilac-300">Đang kiểm tra tiến trình...</p>
-              ) : existing && (existing.maxLevel > 0 || existing.activeRun) ? (
+                <p className="text-xs text-lilac-300">Đang kiểm tra người chơi...</p>
+              ) : existing ? (
                 <div className="rounded-xl border border-mint-400/20 bg-mint-400/10 px-3 py-2.5 text-sm text-mint-300">
                   <Badge tone="mint">Chào mừng trở lại!</Badge>{" "}
-                  <span className="font-semibold text-white">{existing.name}</span> đã qua{" "}
-                  {existing.maxLevel}/7 màn.
-                  {existing.activeRun ? ` Đang ở màn ${existing.activeRun.level}.` : ""}
+                  <span className="font-semibold text-white">{existing.name}</span> đã chơi{" "}
+                  {existing.sessionsCount} lượt, thắng {wins} lượt.
                 </div>
               ) : null}
 
@@ -241,24 +242,13 @@ export function MenuScreen({ onStart, onTeacher, busy, error }: Props) {
 
               <div className="space-y-2 pt-1">
                 <Button type="submit" className="w-full py-4 text-base" disabled={busy}>
-                  {busy ? "Đang chuẩn bị..." : hasProgress ? `Tiếp tục màn ${resumeLevel}` : "Bắt đầu phiêu lưu"}
+                  {busy ? "Đang chuẩn bị..." : "Vào chọn màn"}
                   <span aria-hidden>➜</span>
                 </Button>
-                {hasProgress && (
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="w-full"
-                    disabled={busy}
-                    onClick={() => void submit(true)}
-                  >
-                    Chơi lại từ màn 1
-                  </Button>
-                )}
               </div>
 
               <p className="text-center text-[11px] leading-relaxed text-lilac-300/70">
-                Chúng tôi chỉ lưu họ tên, lớp, nhân vật và kết quả làm bài để hiển thị tiến độ. Không thu thập
+                Chúng tôi chỉ lưu họ tên, lớp, nhân vật, kết quả và câu trả lời để hiển thị tiến độ. Không thu thập
                 email, số điện thoại hay dữ liệu khác.
               </p>
             </form>

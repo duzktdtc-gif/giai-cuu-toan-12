@@ -1,10 +1,25 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const PRODUCTION_ORIGIN = "https://duzktdtc-gif.github.io";
+const DEV_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = origin === PRODUCTION_ORIGIN || DEV_ORIGIN_RE.test(origin);
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : PRODUCTION_ORIGIN,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+function json(req: Request, body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders(req), "Content-Type": "application/json; charset=utf-8" },
+  });
+}
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
@@ -13,13 +28,6 @@ const tokenSecret = Deno.env.get("TEACHER_TOKEN_SECRET") ?? teacherKey;
 const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
 const TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
-  });
-}
 
 function b64urlEncode(value: Uint8Array | string): string {
   const bytes = typeof value === "string" ? new TextEncoder().encode(value) : value;
@@ -92,14 +100,26 @@ function bearer(req: Request): string | null {
 }
 
 function mapStudent(row: Record<string, unknown>) {
+  const levelsPlayed = Array.isArray(row.levels_played)
+    ? row.levels_played
+        .map((level) => Number(level))
+        .filter((level) => Number.isInteger(level) && level > 0)
+    : [];
   return {
     id: row.id,
     displayName: row.display_name,
     className: row.class,
     avatar: row.avatar,
     sessionsCount: Number(row.sessions_count ?? 0),
-    maxLevel: Number(row.max_level ?? 0),
+    winCount: Number(row.win_count ?? 0),
+    loseLivesCount: Number(row.lose_lives_count ?? 0),
+    loseTimeoutCount: Number(row.lose_timeout_count ?? 0),
+    totalTimeMs: Number(row.total_time_ms ?? 0),
     wrongCount: Number(row.wrong_count ?? 0),
+    correctCount: Number(row.correct_count ?? 0),
+    lastLevel: Number(row.last_level ?? 0),
+    levelsPlayed,
+    maxLevel: Number(row.max_level ?? 0),
     lastPlayed: row.last_played ?? null,
     createdAt: row.created_at,
   };
@@ -109,13 +129,33 @@ function mapSession(row: Record<string, unknown>) {
   return {
     id: row.id,
     studentId: row.student_id,
+    level: Number(row.level ?? row.start_level ?? 1),
     startedAt: row.started_at,
     endedAt: row.ended_at,
     startLevel: Number(row.start_level ?? 1),
     maxLevel: Number(row.max_level ?? 0),
+    totalTimeMs: Number(row.total_time_ms ?? 0),
+    wrongCount: Number(row.wrong_count ?? 0),
+    correctCount: Number(row.correct_count ?? 0),
+    clearedCount: Number(row.cleared_count ?? 0),
     result: row.result,
     lastActivity: row.last_activity,
   };
+}
+
+function mapOptions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item;
+      if (item && typeof item === "object") {
+        const option = item as Record<string, unknown>;
+        const candidate = option.text ?? option.label ?? option.value ?? "";
+        return typeof candidate === "string" ? candidate : "";
+      }
+      return "";
+    })
+    .filter((item) => item.length > 0);
 }
 
 function mapAttempt(row: Record<string, unknown>) {
@@ -124,13 +164,14 @@ function mapAttempt(row: Record<string, unknown>) {
     sessionId: row.session_id,
     studentId: row.student_id,
     level: Number(row.level ?? 1),
-    templateId: row.template_id,
-    kind: row.kind,
-    params: row.params_json ?? {},
+    questionId: row.question_id ?? row.template_id,
+    isSimilar: row.is_similar === true,
     questionText: row.question_text,
-    choices: row.choices_json ?? null,
-    givenAnswer: row.given_answer,
-    correctAnswer: row.correct_answer,
+    options: mapOptions(row.choices_json),
+    chosenIndex: row.chosen_index === null || row.chosen_index === undefined ? null : Number(row.chosen_index),
+    correctIndex: row.correct_index === null || row.correct_index === undefined ? null : Number(row.correct_index),
+    chosenText: row.given_answer,
+    correctText: row.correct_answer,
     isCorrect: row.is_correct === true,
     livesLeft: Number(row.lives_left ?? 0),
     timeSpentMs: Number(row.time_spent_ms ?? 0),
@@ -139,10 +180,10 @@ function mapAttempt(row: Record<string, unknown>) {
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
-  if (!supabaseUrl || !serviceKey) return json({ error: "Thiếu cấu hình Supabase" }, 500);
-  if (!teacherKey) return json({ error: "Máy chủ chưa cấu hình TEACHER_KEY" }, 500);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
+  if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
+  if (!supabaseUrl || !serviceKey) return json(req, { error: "Thiếu cấu hình Supabase" }, 500);
+  if (!teacherKey) return json(req, { error: "Máy chủ chưa cấu hình TEACHER_KEY" }, 500);
 
   try {
     const body = (await req.json()) as Record<string, unknown>;
@@ -151,65 +192,70 @@ Deno.serve(async (req: Request) => {
       const key = typeof body.key === "string" ? body.key.trim() : "";
       if (!key || !(await safeEqual(key, teacherKey))) {
         await new Promise((resolve) => setTimeout(resolve, 250));
-        return json({ error: "Key giáo viên không đúng." }, 401);
+        return json(req, { error: "Key giáo viên không đúng." }, 401);
       }
-      return json(await signToken());
+      return json(req, await signToken());
     }
 
     if (!(await verifyToken(bearer(req)))) {
-      return json({ error: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn." }, 401);
+      return json(req, { error: "Phiên đăng nhập không hợp lệ hoặc đã hết hạn." }, 401);
     }
 
     if (body.action === "dashboard") {
-      const [students, levels, templates] = await Promise.all([
+      const [students, levels, questions] = await Promise.all([
         db.from("v_student_overview").select("*").order("last_played", { ascending: false }).limit(2000),
         db.from("v_level_stats").select("*"),
-        db.from("v_template_stats").select("*"),
+        db.from("v_question_stats").select("*"),
       ]);
       if (students.error) throw students.error;
       if (levels.error) throw levels.error;
-      if (templates.error) throw templates.error;
-      return json({
+      if (questions.error) throw questions.error;
+      return json(req, {
         students: (students.data ?? []).map((row) => mapStudent(row as Record<string, unknown>)),
         levelStats: (levels.data ?? []).map((row) => ({
           level: Number(row.level),
           attempts: Number(row.attempts),
           wrong: Number(row.wrong),
           wrongRate: Number(row.wrong_rate ?? 0),
+          sessions: Number(row.sessions ?? 0),
+          wins: Number(row.wins ?? 0),
+          avgTimeMs: Number(row.avg_time_ms ?? 0),
         })),
-        templateStats: (templates.data ?? []).map((row) => ({
-          templateId: row.template_id,
+        questionStats: (questions.data ?? []).map((row) => ({
+          questionId: row.question_id,
           level: Number(row.level),
           attempts: Number(row.attempts),
           wrong: Number(row.wrong),
           wrongRate: Number(row.wrong_rate ?? 0),
+          similarAttempts: Number(row.similar_attempts ?? 0),
         })),
         generatedAt: new Date().toISOString(),
+        answerReviewRequired: true,
       });
     }
 
     if (body.action === "student-detail") {
       const studentId = typeof body.studentId === "string" ? body.studentId : "";
-      if (!/^[0-9a-f-]{36}$/i.test(studentId)) return json({ error: "studentId không hợp lệ" }, 400);
+      if (!/^[0-9a-f-]{36}$/i.test(studentId)) return json(req, { error: "studentId không hợp lệ" }, 400);
       const student = await db.from("v_student_overview").select("*").eq("id", studentId).maybeSingle();
       if (student.error) throw student.error;
-      if (!student.data) return json({ error: "Không tìm thấy học sinh" }, 404);
+      if (!student.data) return json(req, { error: "Không tìm thấy học sinh" }, 404);
       const [sessions, attempts] = await Promise.all([
         db.from("sessions").select("*").eq("student_id", studentId).order("started_at", { ascending: false }).limit(200),
         db.from("attempts").select("*").eq("student_id", studentId).order("created_at", { ascending: false }).limit(1000),
       ]);
       if (sessions.error) throw sessions.error;
       if (attempts.error) throw attempts.error;
-      return json({
+      return json(req, {
         student: mapStudent(student.data as Record<string, unknown>),
         sessions: (sessions.data ?? []).map((row) => mapSession(row as Record<string, unknown>)),
         attempts: (attempts.data ?? []).map((row) => mapAttempt(row as Record<string, unknown>)),
       });
     }
 
-    return json({ error: "Action không hợp lệ" }, 400);
+    return json(req, { error: "Action không hợp lệ" }, 400);
   } catch (error) {
     console.error("teacher error", error);
-    return json({ error: "Máy chủ gặp lỗi. Vui lòng thử lại." }, 500);
+    return json(req, { error: "Máy chủ gặp lỗi. Vui lòng thử lại." }, 500);
   }
 });

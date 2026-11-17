@@ -9,40 +9,36 @@ export interface StudentIdentity {
   avatar: Avatar;
 }
 
-export interface ActiveRun {
-  id: string;
-  level: number;
-  lives: number;
-  startedAt: string;
-  cleared: number;
-  startLevel: number;
-}
-
 export interface StudentProfile extends StudentIdentity {
-  maxLevel: number;
-  totalWrong: number;
   sessionsCount: number;
   createdAt: string;
   lastPlayed: string;
-  activeRun?: ActiveRun;
+  runsByLevel: Record<string, number>;
+  winsByLevel: Record<string, number>;
 }
 
-export type SessionResult = "in_progress" | "victory" | "game_over" | "abandoned";
+export type SessionResult =
+  | "in_progress"
+  | "win"
+  | "lose_lives"
+  | "lose_timeout"
+  | "abandoned"
+  // Giá trị của phiên bản 7 màn cũ, giữ để hiển thị dữ liệu lịch sử.
+  | "victory"
+  | "game_over";
 
 export interface SessionRecord {
   id: string;
   studentId: string;
+  level: number;
   startedAt: string;
   endedAt: string | null;
-  startLevel: number;
-  maxLevel: number;
+  totalTimeMs: number;
+  wrongCount: number;
+  correctCount: number;
+  clearedCount: number;
   result: SessionResult;
   lastActivity: string;
-}
-
-export interface StoredChoice {
-  latex: string;
-  isCorrect: boolean;
 }
 
 export interface AttemptRecord {
@@ -50,13 +46,14 @@ export interface AttemptRecord {
   sessionId: string;
   studentId: string;
   level: number;
-  templateId: string;
-  kind: "mc" | "short";
-  params: Record<string, number | string>;
+  questionId: string;
+  isSimilar: boolean;
   questionText: string;
-  choices: StoredChoice[] | null;
-  givenAnswer: string;
-  correctAnswer: string;
+  options: string[];
+  chosenIndex: number | null;
+  chosenText: string;
+  correctIndex: number | null;
+  correctText: string;
   isCorrect: boolean;
   livesLeft: number;
   timeSpentMs: number;
@@ -73,8 +70,14 @@ export interface TeacherStudentRow {
   className: string;
   avatar: string;
   sessionsCount: number;
-  maxLevel: number;
+  winCount: number;
+  loseLivesCount: number;
+  loseTimeoutCount: number;
+  totalTimeMs: number;
   wrongCount: number;
+  correctCount: number;
+  lastLevel: number;
+  levelsPlayed: number[];
   lastPlayed: string | null;
   createdAt: string;
 }
@@ -84,25 +87,30 @@ export interface LevelStat {
   attempts: number;
   wrong: number;
   wrongRate: number;
+  sessions: number;
+  wins: number;
+  avgTimeMs: number;
 }
 
-export interface TemplateStat {
-  templateId: string;
+export interface QuestionStat {
+  questionId: string;
   level: number;
   attempts: number;
   wrong: number;
   wrongRate: number;
+  similarAttempts: number;
 }
 
 export interface TeacherDashboard {
   students: TeacherStudentRow[];
   levelStats: LevelStat[];
-  templateStats: TemplateStat[];
+  questionStats: QuestionStat[];
   generatedAt: string;
+  answerReviewRequired: boolean;
 }
 
 export interface TeacherStudentDetail {
   student: TeacherStudentRow;
   sessions: SessionRecord[];
-  attempts: Array<AttemptRecord & { createdAt: string }>;
+  attempts: AttemptRecord[];
 }

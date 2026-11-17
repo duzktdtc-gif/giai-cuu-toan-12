@@ -34,12 +34,9 @@ jobs:
         run: npm test
 
       - name: Build
+        # Cấu hình Supabase nằm trong public/config.js và được nạp lúc chạy.
+        # Không dùng VITE_SUPABASE_* khi build.
         run: npm run build
-        env:
-          # Khai báo ở Settings → Secrets and variables → Actions → Variables.
-          # Để trống thì game chạy offline bình thường.
-          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

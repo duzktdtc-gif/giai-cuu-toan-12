@@ -1,0 +1,196 @@
+[
+  {
+    "id": "m1-q01",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Trong không gian, cho hai đường thẳng $a$ và $b$ bất kì. Góc giữa hai đường thẳng $a$ và $b$ được kí hiệu là $(a,b)$. Khẳng định nào sau đây đúng về số đo của góc $(a,b)$?",
+    "figure": { "type": "lines", "mode": "angle" },
+    "options": [
+      "$0^\\circ \\le (a,b) \\le 180^\\circ$.",
+      "$0^\\circ < (a,b) < 90^\\circ$.",
+      "$0^\\circ \\le (a,b) \\le 90^\\circ$.",
+      "$0^\\circ < (a,b) \\le 180^\\circ$."
+    ],
+    "correct": 2,
+    "solution": [
+      "Góc giữa hai đường thẳng được quy ước có số đo từ $0^\\circ$ đến $90^\\circ$.",
+      "Vì vậy $0^\\circ \\le (a,b) \\le 90^\\circ$."
+    ],
+    "similarId": "m1-q01s",
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false
+  },
+  {
+    "id": "m1-q02",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Trong không gian, cho hai đường thẳng $a$ và $b$ bất kì và một điểm $O$ tùy ý. Gọi $a'$ và $b'$ lần lượt là hai đường thẳng đi qua $O$ và song song (hoặc trùng) với $a$ và $b$. Khi đó góc giữa hai đường thẳng $a$ và $b$ bằng:",
+    "figure": { "type": "lines", "mode": "parallel" },
+    "options": [
+      "Góc giữa hai đường thẳng $a'$ và $b'$.",
+      "$180^\\circ$ trừ đi góc giữa hai đường thẳng $a'$ và $b'$.",
+      "Tổng số đo góc của $a'$ và $b'$ với một đường thẳng thứ ba.",
+      "$90^\\circ$ trừ đi góc giữa hai đường thẳng $a'$ và $b'$."
+    ],
+    "correct": 0,
+    "solution": [
+      "Theo định nghĩa, góc giữa hai đường thẳng bằng góc giữa hai đường thẳng song song (hoặc trùng) với chúng và cắt nhau tại một điểm.",
+      "Chọn điểm $O$ tùy ý, dựng $a' \\parallel a$ và $b' \\parallel b$ qua $O$. Khi đó góc giữa $a$ và $b$ bằng góc giữa $a'$ và $b'$."
+    ],
+    "similarId": "m1-q02s",
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false
+  },
+  {
+    "id": "m1-q03",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Trong không gian, nếu hai đường thẳng $a$ và $b$ song song hoặc trùng nhau thì góc giữa chúng bằng bao nhiêu độ?",
+    "figure": { "type": "lines", "mode": "coincident" },
+    "options": ["$90^\\circ$.", "$180^\\circ$.", "$0^\\circ$.", "$45^\\circ$."],
+    "correct": 2,
+    "solution": [
+      "Hai đường thẳng song song hoặc trùng nhau thì góc giữa chúng bằng $0^\\circ$."
+    ],
+    "similarId": "m1-q03s",
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": false
+  },
+  {
+    "id": "m1-q04",
+    "level": 1,
+    "topic": "goc-hai-duong-thang-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Góc giữa hai đường thẳng $AB$ và $B'C'$ bằng góc giữa hai đường thẳng nào sau đây?",
+    "figure": { "type": "cube", "highlight": ["AB", "B'C'"] },
+    "options": [
+      "$AB$ và $AD$.",
+      "$AB$ và $AC$.",
+      "$AB$ và $A'C'$.",
+      "$AB$ và $A'C$."
+    ],
+    "correct": 0,
+    "solution": [
+      "Vì $B'C' \\parallel BC$ và $BC \\parallel AD$ nên $B'C' \\parallel AD$.",
+      "Do đó góc giữa $AB$ và $B'C'$ bằng góc giữa $AB$ và $AD$, tức là $\\widehat{BAD} = 90^\\circ$."
+    ],
+    "similarId": "m1-q04s",
+    "answerStatus": "draft",
+    "solutionStatus": "reviewed",
+    "isSimilar": false,
+    "note": "Phương án nhiễu gốc \"AB và CC'\" cũng vuông góc nên đã thay bằng \"AB và A'C\" (góc khác 90°) để chỉ còn một đáp án đúng. Giáo viên cần duyệt lại."
+  },
+  {
+    "id": "m1-q05",
+    "level": 1,
+    "topic": "goc-hai-duong-thang-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Tính góc giữa hai đường thẳng $AC$ và $A'B$.",
+    "figure": { "type": "cube", "highlight": ["AC", "A'B"] },
+    "options": ["$60^\\circ$.", "$45^\\circ$.", "$75^\\circ$.", "$90^\\circ$."],
+    "correct": 0,
+    "solution": [
+      "Do $A'B \\parallel D'C$ nên góc giữa $AC$ và $A'B$ bằng góc giữa $AC$ và $D'C$.",
+      "Tam giác $ACD'$ có $AC = AD' = CD'$ nên là tam giác đều. Vậy $\\widehat{ACD'} = 60^\\circ$."
+    ],
+    "similarId": "m1-q05s",
+    "answerStatus": "draft",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
+  },
+  {
+    "id": "m1-q01s",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Trong không gian, số đo góc giữa hai đường thẳng bất kì luôn nằm trong khoảng nào?",
+    "figure": { "type": "lines", "mode": "angle" },
+    "options": [
+      "$0^\\circ \\le (a,b) \\le 90^\\circ$.",
+      "$0^\\circ \\le (a,b) \\le 180^\\circ$.",
+      "$0^\\circ < (a,b) < 90^\\circ$.",
+      "$0^\\circ < (a,b) \\le 180^\\circ$."
+    ],
+    "correct": 0,
+    "solution": [
+      "Góc giữa hai đường thẳng luôn được quy ước có số đo từ $0^\\circ$ đến $90^\\circ$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": true,
+    "note": "Câu tương tự do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m1-q02s",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Góc giữa hai đường thẳng $a$ và $b$ bằng góc giữa hai đường thẳng $a'$ và $b'$ khi $a'$, $b'$ lần lượt:",
+    "figure": { "type": "lines", "mode": "parallel" },
+    "options": [
+      "Song song (hoặc trùng) với $a$, $b$ và cắt nhau tại một điểm.",
+      "Vuông góc với nhau.",
+      "Cắt $a$, $b$ tại hai điểm phân biệt.",
+      "Song song với nhau."
+    ],
+    "correct": 0,
+    "solution": [
+      "Theo định nghĩa, ta dựng $a' \\parallel a$, $b' \\parallel b$ và $a'$ cắt $b'$ tại $O$; góc giữa $a$ và $b$ là góc giữa $a'$ và $b'$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": true,
+    "note": "Phương án nhiễu được viết lại để chỉ còn một đáp án đúng; lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m1-q03s",
+    "level": 1,
+    "topic": "goc-hai-duong-thang",
+    "stem": "Nếu hai đường thẳng $a$ và $b$ trùng nhau thì góc giữa chúng bằng:",
+    "figure": { "type": "lines", "mode": "coincident" },
+    "options": ["$0^\\circ$.", "$45^\\circ$.", "$90^\\circ$.", "$180^\\circ$."],
+    "correct": 0,
+    "solution": ["Hai đường thẳng trùng nhau tạo với nhau góc $0^\\circ$."],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": true,
+    "note": "Câu tương tự do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m1-q04s",
+    "level": 1,
+    "topic": "goc-hai-duong-thang-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Góc giữa hai đường thẳng $AD$ và $B'D'$ bằng góc giữa hai đường thẳng nào sau đây?",
+    "figure": { "type": "cube", "highlight": ["AD", "B'D'"] },
+    "options": [
+      "$BD$ và $AD$.",
+      "$B'D$ và $AD$.",
+      "$BD'$ và $A'D'$.",
+      "$BD$ và $AD'$."
+    ],
+    "correct": 0,
+    "solution": [
+      "Vì $B'D' \\parallel BD$ nên góc giữa $AD$ và $B'D'$ bằng góc giữa $AD$ và $BD$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": true,
+    "note": "Câu tương tự lấy từ file Word; lời giải do AI soạn, giáo viên cần duyệt."
+  },
+  {
+    "id": "m1-q05s",
+    "level": 1,
+    "topic": "goc-hai-duong-thang-trong-lap-phuong",
+    "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Tính góc giữa hai đường thẳng $A'C'$ và $AD$.",
+    "figure": { "type": "cube", "highlight": ["A'C'", "AD"] },
+    "options": ["$60^\\circ$.", "$45^\\circ$.", "$75^\\circ$.", "$90^\\circ$."],
+    "correct": 1,
+    "solution": [
+      "Vì $A'C' \\parallel AC$ nên góc giữa $A'C'$ và $AD$ bằng góc giữa $AC$ và $AD$.",
+      "Trong hình vuông $ABCD$, đường chéo $AC$ tạo với cạnh $AD$ góc $45^\\circ$."
+    ],
+    "answerStatus": "draft",
+    "solutionStatus": "draft",
+    "isSimilar": true,
+    "note": "Câu tương tự lấy từ file Word; lời giải do AI soạn, giáo viên cần duyệt."
+  }
+]

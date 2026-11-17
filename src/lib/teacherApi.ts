@@ -1,8 +1,8 @@
 import type { TeacherDashboard, TeacherStudentDetail } from "./models";
 import { supabaseConfigured } from "./sync";
+import { getSupabaseConfig } from "./appConfig";
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? "").trim().replace(/\/$/, "");
-const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim();
+const { url: supabaseUrl, anonKey } = getSupabaseConfig();
 
 export interface TeacherSession {
   token: string;

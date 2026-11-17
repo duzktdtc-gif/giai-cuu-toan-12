@@ -8,9 +8,16 @@ import {
   teacherLogin,
   type TeacherSession,
 } from "../lib/teacherApi";
-import type { AttemptRecord, TeacherDashboard, TeacherStudentDetail, TeacherStudentRow } from "../lib/models";
-import { templateTitle } from "../questions";
-import { levelMeta } from "../game/levels";
+import type {
+  AttemptRecord,
+  SessionResult,
+  TeacherDashboard,
+  TeacherStudentDetail,
+  TeacherStudentRow,
+} from "../lib/models";
+import { questionLabel } from "../game/catalog";
+import { missionMeta } from "../game/levels";
+import { resultLabel } from "../game/engine";
 import { formatDateTime, formatDuration, formatPercent, timeAgo } from "../lib/format";
 import { NightScene } from "../components/NightScene";
 import { MathText } from "../components/MathText";
@@ -21,7 +28,9 @@ interface Props {
 }
 
 function csvCell(value: string | number | null | undefined): string {
-  const text = value === null || value === undefined ? "" : String(value);
+  let text = value === null || value === undefined ? "" : String(value);
+  // Chặn công thức spreadsheet khi mở CSV bằng Excel/Google Sheets.
+  if (/^\s*[=+\-@\t\r]/.test(text)) text = `'${text}`;
   return `"${text.replace(/"/g, '""')}"`;
 }
 
@@ -38,16 +47,30 @@ function downloadCsv(filename: string, rows: Array<Array<string | number | null 
   URL.revokeObjectURL(url);
 }
 
+function levelName(level: number): string {
+  if (level === 1 || level === 2) return `Màn ${level}`;
+  return `Màn ${level} (cũ)`;
+}
+
+function levelTopic(level: number): string {
+  if (level === 1 || level === 2) return missionMeta(level).topic;
+  return "Dữ liệu phiên bản 7 màn cũ";
+}
+
 function studentCsv(rows: TeacherStudentRow[]): void {
   downloadCsv(`bang-diem-${new Date().toISOString().slice(0, 10)}.csv`, [
-    ["Họ tên", "Lớp", "Nhân vật", "Số lượt chơi", "Màn cao nhất", "Tổng lần sai", "Lần chơi gần nhất"],
+    ["Họ tên", "Lớp", "Nhân vật", "Số lượt", "Thắng", "Hết mạng", "Hết giờ", "Số lần sai", "Tổng thời gian (ms)", "Màn gần nhất", "Lần chơi gần nhất"],
     ...rows.map((row) => [
       row.displayName,
       row.className,
       row.avatar === "prince" ? "Hoàng tử" : "Công chúa",
       row.sessionsCount,
-      row.maxLevel,
+      row.winCount,
+      row.loseLivesCount,
+      row.loseTimeoutCount,
       row.wrongCount,
+      row.totalTimeMs,
+      row.lastLevel,
       row.lastPlayed ? formatDateTime(row.lastPlayed) : "",
     ]),
   ]);
@@ -55,19 +78,27 @@ function studentCsv(rows: TeacherStudentRow[]): void {
 
 function detailCsv(student: TeacherStudentRow, attempts: AttemptRecord[]): void {
   downloadCsv(`chi-tiet-${student.displayName.replace(/\s+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`, [
-    ["Thời gian", "Màn", "Mẫu bài", "Đề bài", "Đáp án đã chọn", "Đáp án đúng", "Kết quả", "Mạng còn lại", "Thời gian làm (ms)"],
+    ["Thời gian", "Màn", "Câu", "Loại", "Đề bài", "Đáp án đã chọn", "Đáp án đúng", "Kết quả", "Mạng còn lại", "Thời gian làm (ms)"],
     ...attempts.map((attempt) => [
       formatDateTime(attempt.createdAt),
       attempt.level,
-      `${attempt.templateId} – ${templateTitle(attempt.templateId)}`,
+      `${attempt.questionId} – ${questionLabel(attempt.questionId)}`,
+      attempt.isSimilar ? "Câu tương tự" : "Câu gốc",
       attempt.questionText,
-      attempt.givenAnswer,
-      attempt.correctAnswer,
+      attempt.chosenText,
+      attempt.correctText,
       attempt.isCorrect ? "Đúng" : "Sai",
       attempt.livesLeft,
       attempt.timeSpentMs,
     ]),
   ]);
+}
+
+function sessionTone(result: SessionResult): "mint" | "rose" | "gold" | "lilac" {
+  if (result === "win" || result === "victory") return "mint";
+  if (result === "lose_lives" || result === "game_over") return "rose";
+  if (result === "lose_timeout") return "gold";
+  return "lilac";
 }
 
 export function TeacherScreen({ onBack }: Props) {
@@ -79,6 +110,7 @@ export function TeacherScreen({ onBack }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [classFilter, setClassFilter] = useState("all");
+  const [levelFilter, setLevelFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [detail, setDetail] = useState<TeacherStudentDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
@@ -158,19 +190,29 @@ export function TeacherScreen({ onBack }: Props) {
     return (dashboard?.students ?? []).filter((student) => {
       const matchesClass = classFilter === "all" || student.className === classFilter;
       const matchesName = !needle || student.displayName.toLocaleLowerCase("vi").includes(needle);
-      return matchesClass && matchesName;
+      const matchesLevel =
+        levelFilter === "all" || (student.levelsPlayed ?? []).some((level) => String(level) === levelFilter);
+      return matchesClass && matchesName && matchesLevel;
     });
-  }, [dashboard, classFilter, search]);
+  }, [dashboard, classFilter, levelFilter, search]);
 
   const summary = useMemo(() => {
     const students = dashboard?.students ?? [];
     const sessions = students.reduce((sum, student) => sum + student.sessionsCount, 0);
+    const wins = students.reduce((sum, student) => sum + student.winCount, 0);
     const wrong = students.reduce((sum, student) => sum + student.wrongCount, 0);
-    const completed = students.filter((student) => student.maxLevel >= 7).length;
-    return { students: students.length, sessions, wrong, completed };
+    return { students: students.length, sessions, wins, wrong };
   }, [dashboard]);
 
-  const levelRows = dashboard?.levelStats ?? [];
+  const levelRows = (dashboard?.levelStats ?? []).filter(
+    (row) => levelFilter === "all" || String(row.level) === levelFilter,
+  );
+  const levelFilterLabel = levelFilter === "all" ? "tất cả các màn" : levelName(Number(levelFilter));
+  const questionRows = (dashboard?.questionStats ?? [])
+    .filter((row) => levelFilter === "all" || String(row.level) === levelFilter)
+    .slice()
+    .sort((a, b) => b.wrongRate - a.wrongRate || b.attempts - a.attempts)
+    .slice(0, 15);
 
   return (
     <NightScene className="min-h-dvh">
@@ -261,13 +303,19 @@ export function TeacherScreen({ onBack }: Props) {
                 {error}
               </p>
             )}
+            {dashboard?.answerReviewRequired && (
+              <p className="rounded-lg border border-gold-400/30 bg-gold-400/10 px-3 py-2 text-xs leading-relaxed text-gold-200">
+                ⚠️ Đáp án và lời giải hiện đang ở trạng thái <strong>tạm (draft)</strong>. Giáo viên cần duyệt lại
+                trước khi dùng chính thức.
+              </p>
+            )}
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 { label: "Học sinh", value: summary.students, tone: "text-gold-300" },
                 { label: "Lượt chơi", value: summary.sessions, tone: "text-lilac-200" },
+                { label: "Lượt thắng", value: summary.wins, tone: "text-mint-300" },
                 { label: "Lần trả lời sai", value: summary.wrong, tone: "text-rose-300" },
-                { label: "Đã phá đảo", value: summary.completed, tone: "text-mint-300" },
               ].map((item) => (
                 <div key={item.label} className="card p-3">
                   <p className="text-[11px] text-lilac-300">{item.label}</p>
@@ -287,7 +335,7 @@ export function TeacherScreen({ onBack }: Props) {
                     aria-label="Tìm theo tên"
                   />
                   <select
-                    className="field py-2.5 sm:max-w-40"
+                    className="field py-2.5 sm:max-w-36"
                     value={classFilter}
                     onChange={(event) => setClassFilter(event.target.value)}
                     aria-label="Lọc theo lớp"
@@ -298,6 +346,16 @@ export function TeacherScreen({ onBack }: Props) {
                         {className}
                       </option>
                     ))}
+                  </select>
+                  <select
+                    className="field py-2.5 sm:max-w-32"
+                    value={levelFilter}
+                    onChange={(event) => setLevelFilter(event.target.value)}
+                    aria-label="Lọc theo màn"
+                  >
+                    <option value="all">Tất cả màn</option>
+                    <option value="1">Màn 1</option>
+                    <option value="2">Màn 2</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
@@ -320,14 +378,16 @@ export function TeacherScreen({ onBack }: Props) {
               ) : (
                 <>
                   <div className="hidden overflow-x-auto md:block">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full min-w-[900px] text-left text-sm">
                       <thead className="bg-ink-950/50 text-[11px] uppercase tracking-wide text-lilac-300">
                         <tr>
                           <th className="px-4 py-2.5">Học sinh</th>
                           <th className="px-3 py-2.5">Lớp</th>
-                          <th className="px-3 py-2.5">Lượt chơi</th>
-                          <th className="px-3 py-2.5">Màn cao nhất</th>
-                          <th className="px-3 py-2.5">Tổng sai</th>
+                          <th className="px-3 py-2.5">Lượt</th>
+                          <th className="px-3 py-2.5">Thắng</th>
+                          <th className="px-3 py-2.5">Thua</th>
+                          <th className="px-3 py-2.5">Thời gian</th>
+                          <th className="px-3 py-2.5">Màn</th>
                           <th className="px-3 py-2.5">Gần nhất</th>
                           <th className="px-3 py-2.5"></th>
                         </tr>
@@ -338,11 +398,21 @@ export function TeacherScreen({ onBack }: Props) {
                             <td className="px-4 py-2.5 font-semibold text-white">{student.displayName}</td>
                             <td className="px-3 py-2.5 text-lilac-200">{student.className}</td>
                             <td className="px-3 py-2.5">{student.sessionsCount}</td>
-                            <td className="px-3 py-2.5">
-                              <span className="font-bold text-gold-300">{student.maxLevel}</span>
-                              <span className="text-lilac-300">/7</span>
+                            <td className="px-3 py-2.5 font-bold text-mint-300">{student.winCount}</td>
+                            <td className="px-3 py-2.5 text-rose-300">
+                              {student.loseLivesCount + student.loseTimeoutCount} thua
+                              {student.loseLivesCount + student.loseTimeoutCount > 0 && (
+                                <p className="text-[10px] font-normal text-lilac-300">
+                                  mạng {student.loseLivesCount} · giờ {student.loseTimeoutCount}
+                                </p>
+                              )}
                             </td>
-                            <td className="px-3 py-2.5 text-rose-300">{student.wrongCount}</td>
+                            <td className="px-3 py-2.5 text-xs text-lilac-200">{formatDuration(student.totalTimeMs)}</td>
+                            <td className="px-3 py-2.5 text-xs text-lilac-200">
+                              {(student.levelsPlayed ?? []).length
+                                ? (student.levelsPlayed ?? []).map(levelName).join(", ")
+                                : "—"}
+                            </td>
                             <td className="px-3 py-2.5 text-xs text-lilac-300">{timeAgo(student.lastPlayed)}</td>
                             <td className="px-3 py-2.5 text-right">
                               <Button
@@ -371,12 +441,22 @@ export function TeacherScreen({ onBack }: Props) {
                         <div className="min-w-0">
                           <p className="truncate font-semibold text-white">{student.displayName}</p>
                           <p className="text-xs text-lilac-300">
-                            {student.className} · {student.sessionsCount} lượt · {timeAgo(student.lastPlayed)}
+                            {student.className} · {student.sessionsCount} lượt · {formatDuration(student.totalTimeMs)}
                           </p>
+                          <p className="text-[10px] text-lilac-300/70">Gần nhất {timeAgo(student.lastPlayed)}</p>
                         </div>
                         <div className="shrink-0 text-right">
-                          <p className="text-sm font-bold text-gold-300">{student.maxLevel}/7</p>
-                          <p className="text-[11px] text-rose-300">{student.wrongCount} lần sai</p>
+                          <p className="text-sm font-bold text-mint-300">
+                            {student.winCount} thắng
+                          </p>
+                          <p className="text-[11px] text-rose-300">
+                            {student.loseLivesCount + student.loseTimeoutCount} thua
+                          </p>
+                          {student.loseLivesCount + student.loseTimeoutCount > 0 && (
+                            <p className="text-[10px] text-lilac-300">
+                              mạng {student.loseLivesCount} · giờ {student.loseTimeoutCount}
+                            </p>
+                          )}
                         </div>
                       </button>
                     ))}
@@ -388,14 +468,14 @@ export function TeacherScreen({ onBack }: Props) {
             <div className="grid min-w-0 gap-4 lg:grid-cols-2">
               <div className="card min-w-0 p-4">
                 <h2 className="text-sm font-bold text-white">Tỉ lệ sai theo màn</h2>
-                <p className="mb-3 text-[11px] text-lilac-300">Toàn bộ các lượt trả lời đã ghi nhận.</p>
+                <p className="mb-3 text-[11px] text-lilac-300">Dữ liệu {levelFilterLabel} · toàn bộ học sinh.</p>
                 <div className="space-y-2.5">
                   {levelRows.length === 0 && <p className="text-sm text-lilac-300">Chưa có dữ liệu.</p>}
                   {levelRows.map((row) => (
                     <div key={row.level}>
                       <div className="mb-1 flex items-center justify-between gap-2 text-xs">
                         <span className="min-w-0 flex-1 truncate text-lilac-200">
-                          M{row.level} · {levelMeta(row.level).topic}
+                          {levelName(row.level)} · {levelTopic(row.level)}
                         </span>
                         <span className="shrink-0 font-semibold text-white">
                           {formatPercent(row.wrongRate)}{" "}
@@ -412,40 +492,39 @@ export function TeacherScreen({ onBack }: Props) {
                           style={{ width: `${Math.round(row.wrongRate * 100)}%` }}
                         />
                       </div>
+                      <p className="mt-0.5 text-[10px] text-lilac-300/70">
+                        {row.sessions} lượt · thắng {row.wins} · TB {formatDuration(row.avgTimeMs)}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="card min-w-0 p-4">
-                <h2 className="text-sm font-bold text-white">Dạng bài cần chú ý</h2>
-                <p className="mb-3 text-[11px] text-lilac-300">Sắp xếp theo tỉ lệ sai giảm dần.</p>
-                <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
-                  {(dashboard?.templateStats ?? [])
-                    .slice()
-                    .sort((a, b) => b.wrongRate - a.wrongRate)
-                    .slice(0, 12)
-                    .map((row) => (
-                      <div key={row.templateId} className="flex items-center justify-between gap-2 rounded-lg bg-ink-950/40 px-2.5 py-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-lilac-100">{templateTitle(row.templateId)}</p>
-                          <p className="text-[10px] text-lilac-300">
-                            Màn {row.level} · {row.templateId}
-                          </p>
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <p className={`text-sm font-bold ${row.wrongRate >= 0.4 ? "text-rose-300" : "text-gold-300"}`}>
-                            {formatPercent(row.wrongRate)}
-                          </p>
-                          <p className="text-[10px] text-lilac-300">
-                            {row.wrong}/{row.attempts} sai
-                          </p>
-                        </div>
+                <h2 className="text-sm font-bold text-white">Câu hỏi cần chú ý</h2>
+                <p className="mb-3 text-[11px] text-lilac-300">
+                  Dữ liệu {levelFilterLabel} · sắp xếp theo tỉ lệ sai giảm dần.
+                </p>
+                <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+                  {questionRows.map((row) => (
+                    <div key={`${row.level}-${row.questionId}`} className="flex items-center justify-between gap-2 rounded-lg bg-ink-950/40 px-2.5 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-lilac-100">{questionLabel(row.questionId)}</p>
+                        <p className="text-[10px] text-lilac-300">
+                          {levelName(row.level)} · {row.similarAttempts} lượt câu tương tự
+                        </p>
                       </div>
-                    ))}
-                  {(dashboard?.templateStats ?? []).length === 0 && (
-                    <p className="text-sm text-lilac-300">Chưa có dữ liệu.</p>
-                  )}
+                      <div className="shrink-0 text-right">
+                        <p className={`text-sm font-bold ${row.wrongRate >= 0.4 ? "text-rose-300" : "text-gold-300"}`}>
+                          {formatPercent(row.wrongRate)}
+                        </p>
+                        <p className="text-[10px] text-lilac-300">
+                          {row.wrong}/{row.attempts} sai
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  {questionRows.length === 0 && <p className="text-sm text-lilac-300">Chưa có dữ liệu.</p>}
                 </div>
               </div>
             </div>
@@ -471,8 +550,8 @@ export function TeacherScreen({ onBack }: Props) {
                 <p className="text-lg font-bold text-white">{detail.student.sessionsCount}</p>
               </div>
               <div className="rounded-lg bg-ink-950/50 p-2.5">
-                <p className="text-[10px] text-lilac-300">Màn cao nhất</p>
-                <p className="text-lg font-bold text-gold-300">{detail.student.maxLevel}/7</p>
+                <p className="text-[10px] text-lilac-300">Lượt thắng</p>
+                <p className="text-lg font-bold text-mint-300">{detail.student.winCount}</p>
               </div>
               <div className="rounded-lg bg-ink-950/50 p-2.5">
                 <p className="text-[10px] text-lilac-300">Tổng lần sai</p>
@@ -482,6 +561,29 @@ export function TeacherScreen({ onBack }: Props) {
                 <p className="text-[10px] text-lilac-300">Gần nhất</p>
                 <p className="text-xs font-semibold text-lilac-200">{timeAgo(detail.student.lastPlayed)}</p>
               </div>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-sm font-bold text-white">Các lượt chơi ({detail.sessions.length})</h3>
+              {detail.sessions.length === 0 ? (
+                <p className="text-sm text-lilac-300">Chưa có lượt chơi nào.</p>
+              ) : (
+                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                  {detail.sessions.map((session) => (
+                    <div key={session.id} className="rounded-lg border border-lilac-400/15 bg-ink-950/40 p-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge tone={sessionTone(session.result)}>{resultLabel(session.result)}</Badge>
+                        <span className="text-xs font-semibold text-lilac-100">{levelName(session.level)}</span>
+                        <span className="ml-auto text-[10px] text-lilac-300">{formatDateTime(session.startedAt)}</span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-lilac-300">
+                        {formatDuration(session.totalTimeMs)} · qua {session.clearedCount} câu · {session.correctCount} đúng ·{" "}
+                        {session.wrongCount} sai
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div>
@@ -511,7 +613,8 @@ export function TeacherScreen({ onBack }: Props) {
                           {attempt.isCorrect ? "✓" : "✕"}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-xs text-lilac-100">
-                          M{attempt.level} · {templateTitle(attempt.templateId)}
+                          {levelName(attempt.level)} · {questionLabel(attempt.questionId)}
+                          {attempt.isSimilar ? " · tương tự" : ""}
                         </span>
                         <span className="shrink-0 text-[10px] text-lilac-300">
                           {attempt.livesLeft}❤️ · {(attempt.timeSpentMs / 1000).toFixed(1)}s
@@ -526,28 +629,40 @@ export function TeacherScreen({ onBack }: Props) {
                         <div className="grid gap-2 sm:grid-cols-2">
                           <div className="rounded-lg bg-ink-900/70 p-2">
                             <p className="text-[10px] text-lilac-300">Đã chọn</p>
-                            <MathText
-                              text={attempt.kind === "mc" ? `$${attempt.givenAnswer}$` : attempt.givenAnswer || "—"}
-                              className="text-white"
-                            />
+                            <MathText text={attempt.chosenText || "—"} className="text-white" />
                           </div>
                           <div className="rounded-lg bg-ink-900/70 p-2">
                             <p className="text-[10px] text-lilac-300">Đáp án đúng</p>
-                            <MathText text={`$${attempt.correctAnswer}$`} className="text-mint-300" />
+                            <MathText text={attempt.correctText} className="text-mint-300" />
                           </div>
                         </div>
+                        {attempt.options?.length > 0 && (
+                          <details>
+                            <summary className="cursor-pointer text-[10px] text-lilac-300">Xem đáp án</summary>
+                            <ol className="mt-1 space-y-1">
+                              {attempt.options.map((option, index) => (
+                                <li
+                                  key={index}
+                                  className={`rounded px-2 py-1 ${
+                                    index === attempt.correctIndex
+                                      ? "bg-mint-400/10 text-mint-200"
+                                      : index === attempt.chosenIndex
+                                        ? "bg-rose-400/10 text-rose-200"
+                                        : "text-lilac-200"
+                                  }`}
+                                >
+                                  {String.fromCharCode(65 + index)}. <MathText text={option} />
+                                </li>
+                              ))}
+                            </ol>
+                          </details>
+                        )}
                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-lilac-300">
-                          <span>Mẫu: {attempt.templateId}</span>
+                          <span>Câu: {attempt.questionId}</span>
                           <span>Thời gian: {formatDuration(attempt.timeSpentMs)}</span>
                           <span>Mạng còn: {attempt.livesLeft}</span>
                           <span>{formatDateTime(attempt.createdAt)}</span>
                         </div>
-                        <details>
-                          <summary className="cursor-pointer text-[10px] text-lilac-300">Tham số random</summary>
-                          <pre className="mt-1 max-h-32 overflow-auto rounded bg-ink-950 p-2 text-[10px] text-lilac-200">
-                            {JSON.stringify(attempt.params, null, 2)}
-                          </pre>
-                        </details>
                       </div>
                     </details>
                   ))}
@@ -562,9 +677,11 @@ export function TeacherScreen({ onBack }: Props) {
                   <thead className="text-[10px] uppercase text-lilac-300">
                     <tr>
                       <th className="py-1.5 pr-3">Bắt đầu</th>
-                      <th className="py-1.5 pr-3">Từ màn</th>
-                      <th className="py-1.5 pr-3">Màn cao nhất</th>
+                      <th className="py-1.5 pr-3">Màn</th>
                       <th className="py-1.5 pr-3">Kết quả</th>
+                      <th className="py-1.5 pr-3">Đúng</th>
+                      <th className="py-1.5 pr-3">Sai</th>
+                      <th className="py-1.5 pr-3">Thời gian</th>
                       <th className="py-1.5">Kết thúc</th>
                     </tr>
                   </thead>
@@ -572,29 +689,13 @@ export function TeacherScreen({ onBack }: Props) {
                     {detail.sessions.map((item) => (
                       <tr key={item.id}>
                         <td className="py-1.5 pr-3 text-lilac-200">{formatDateTime(item.startedAt)}</td>
-                        <td className="py-1.5 pr-3">{item.startLevel}</td>
-                        <td className="py-1.5 pr-3 text-gold-300">{item.maxLevel}/7</td>
+                        <td className="py-1.5 pr-3">{levelName(item.level)}</td>
                         <td className="py-1.5 pr-3">
-                          <Badge
-                            tone={
-                              item.result === "victory"
-                                ? "mint"
-                                : item.result === "game_over"
-                                  ? "rose"
-                                  : item.result === "abandoned"
-                                    ? "lilac"
-                                    : "gold"
-                            }
-                          >
-                            {item.result === "victory"
-                              ? "Phá đảo"
-                              : item.result === "game_over"
-                                ? "Hết mạng"
-                                : item.result === "abandoned"
-                                  ? "Bỏ dở"
-                                  : "Đang chơi"}
-                          </Badge>
+                          <Badge tone={sessionTone(item.result)}>{resultLabel(item.result)}</Badge>
                         </td>
+                        <td className="py-1.5 pr-3 text-mint-300">{item.correctCount}</td>
+                        <td className="py-1.5 pr-3 text-rose-300">{item.wrongCount}</td>
+                        <td className="py-1.5 pr-3">{formatDuration(item.totalTimeMs)}</td>
                         <td className="py-1.5 text-lilac-300">{item.endedAt ? formatDateTime(item.endedAt) : "—"}</td>
                       </tr>
                     ))}

@@ -1,24 +1,41 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const PRODUCTION_ORIGIN = "https://duzktdtc-gif.github.io";
+const DEV_ORIGIN_RE = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/;
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("Origin") ?? "";
+  const allowed = origin === PRODUCTION_ORIGIN || DEV_ORIGIN_RE.test(origin);
+  return {
+    "Access-Control-Allow-Origin": allowed ? origin : PRODUCTION_ORIGIN,
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+}
+
+function json(req: Request, body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders(req), "Content-Type": "application/json; charset=utf-8" },
+  });
+}
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
 const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const db = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const RESULTS = new Set(["in_progress", "victory", "game_over", "abandoned"]);
-
-function json(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json; charset=utf-8" },
-  });
-}
+const RESULTS = new Set([
+  "in_progress",
+  "win",
+  "lose_lives",
+  "lose_timeout",
+  "abandoned",
+  // Giá trị của phiên bản 7 màn cũ.
+  "victory",
+  "game_over",
+]);
 
 function text(value: unknown, max: number): string {
   return typeof value === "string" ? value.normalize("NFC").trim().replace(/\s+/g, " ").slice(0, max) : "";
@@ -38,6 +55,17 @@ function integer(value: unknown, min: number, max: number, fallback: number): nu
   return Math.min(max, Math.max(min, Math.round(number)));
 }
 
+function optionalIndex(value: unknown): number | null {
+  const number = typeof value === "number" ? value : Number(value);
+  if (!Number.isInteger(number) || number < 0 || number > 3) return null;
+  return number;
+}
+
+function indexFromAnswer(value: string): number | null {
+  const match = value.trim().match(/^([A-D])(?:[.)\s]|$)/i);
+  return match ? match[1].toUpperCase().charCodeAt(0) - 65 : null;
+}
+
 function uuid(value: unknown): string | null {
   return typeof value === "string" && UUID_RE.test(value) ? value : null;
 }
@@ -46,6 +74,25 @@ function dateIso(value: unknown, fallback: string | null = null): string | null 
   if (typeof value !== "string") return fallback;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? fallback : date.toISOString();
+}
+
+function optionText(value: unknown): string {
+  if (typeof value === "string") return text(value, 1000);
+  if (value && typeof value === "object") {
+    const option = value as Record<string, unknown>;
+    const candidate = option.text ?? option.label ?? option.value ?? option.html ?? "";
+    if (typeof candidate === "string") return text(candidate, 1000);
+  }
+  return "";
+}
+
+function parseOptions(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const options = value
+    .slice(0, 6)
+    .map(optionText)
+    .filter((option) => option.length > 0);
+  return options.length ? options : null;
 }
 
 interface StudentInput {
@@ -134,10 +181,16 @@ async function maxLevelOf(studentId: string): Promise<number> {
 
 interface SessionInput {
   id: string;
+  student_id: string;
   started_at: string;
   ended_at: string | null;
+  level: number;
   start_level: number;
   max_level: number;
+  total_time_ms: number;
+  wrong_count: number;
+  correct_count: number;
+  cleared_count: number;
   result: string;
   last_activity: string;
 }
@@ -153,13 +206,21 @@ function parseSessions(raw: unknown, studentId: string, fallbackTime: string): S
     const startedAt = dateIso(input.startedAt, fallbackTime) ?? fallbackTime;
     const endedAt = dateIso(input.endedAt, null);
     const result = typeof input.result === "string" && RESULTS.has(input.result) ? input.result : "in_progress";
-    const session: SessionInput & { student_id?: string } = {
+    const level = integer(input.level ?? input.startLevel, 1, 7, 1);
+    const startLevel = integer(input.startLevel ?? input.level, 1, 7, level);
+    const maxLevel = Math.max(level, integer(input.maxLevel, 0, 7, level));
+    const session: SessionInput = {
       id,
       student_id: studentId,
       started_at: startedAt,
       ended_at: endedAt,
-      start_level: integer(input.startLevel, 1, 7, 1),
-      max_level: integer(input.maxLevel, 0, 7, 0),
+      level,
+      start_level: startLevel,
+      max_level: maxLevel,
+      total_time_ms: integer(input.totalTimeMs, 0, 86_400_000, 0),
+      wrong_count: integer(input.wrongCount, 0, 1000, 0),
+      correct_count: integer(input.correctCount, 0, 1000, 0),
+      cleared_count: integer(input.clearedCount, 0, 5, 0),
       result,
       last_activity: dateIso(input.lastActivity, endedAt ?? startedAt) ?? startedAt,
     };
@@ -173,14 +234,18 @@ interface AttemptInput {
   session_id: string;
   student_id: string;
   level: number;
+  question_id: string;
   template_id: string;
   kind: "mc" | "short";
   params_json: Record<string, unknown>;
   question_text: string;
-  choices_json: unknown[] | null;
+  choices_json: string[] | null;
   given_answer: string;
   correct_answer: string;
   is_correct: boolean;
+  is_similar: boolean;
+  chosen_index: number | null;
+  correct_index: number | null;
   lives_left: number;
   time_spent_ms: number;
   created_at: string;
@@ -195,28 +260,42 @@ function parseAttempts(raw: unknown, studentId: string, fallbackTime: string): A
     const id = uuid(input.id);
     const sessionId = uuid(input.sessionId);
     if (!id || !sessionId) continue;
-    const templateId = text(input.templateId, 80);
+    const questionId = text(input.questionId ?? input.templateId, 80);
     const questionText = typeof input.questionText === "string" ? input.questionText.slice(0, 4000) : "";
-    if (!templateId || !questionText) continue;
+    if (!questionId || !questionText) continue;
     const createdAt = dateIso(input.createdAt, fallbackTime) ?? fallbackTime;
-    const params =
-      input.params && typeof input.params === "object" && !Array.isArray(input.params)
-        ? (input.params as Record<string, unknown>)
-        : {};
-    const choices = Array.isArray(input.choices) && input.choices.length <= 6 ? input.choices : null;
+    const options = parseOptions(input.options ?? input.choices);
+    const givenAnswer = text(input.chosenText ?? input.givenAnswer, 2000);
+    const correctAnswer = text(input.correctText ?? input.correctAnswer, 2000);
+    let chosenIndex = optionalIndex(input.chosenIndex) ?? indexFromAnswer(givenAnswer);
+    let correctIndex = optionalIndex(input.correctIndex) ?? indexFromAnswer(correctAnswer);
+    if (options) {
+      if (chosenIndex === null) {
+        const found = options.indexOf(givenAnswer);
+        if (found >= 0) chosenIndex = found;
+      }
+      if (correctIndex === null) {
+        const found = options.indexOf(correctAnswer);
+        if (found >= 0) correctIndex = found;
+      }
+    }
     map.set(id, {
       id,
       session_id: sessionId,
       student_id: studentId,
       level: integer(input.level, 1, 7, 1),
-      template_id: templateId,
+      question_id: questionId,
+      template_id: questionId,
       kind: input.kind === "short" ? "short" : "mc",
-      params_json: params,
+      params_json: {},
       question_text: questionText,
-      choices_json: choices,
-      given_answer: typeof input.givenAnswer === "string" ? input.givenAnswer.slice(0, 2000) : "",
-      correct_answer: typeof input.correctAnswer === "string" ? input.correctAnswer.slice(0, 2000) : "",
+      choices_json: options,
+      given_answer: givenAnswer,
+      correct_answer: correctAnswer,
       is_correct: input.isCorrect === true,
+      is_similar: input.isSimilar === true,
+      chosen_index: chosenIndex,
+      correct_index: correctIndex,
       lives_left: integer(input.livesLeft, 0, 3, 0),
       time_spent_ms: integer(input.timeSpentMs, 0, 86_400_000, 0),
       created_at: createdAt,
@@ -241,8 +320,13 @@ async function ensureSessions(attempts: AttemptInput[], sessionIds: Set<string>,
       student_id: studentId,
       started_at: attempt.created_at,
       ended_at: null,
+      level: attempt.level,
       start_level: attempt.level,
-      max_level: Math.max(0, attempt.level - 1),
+      max_level: attempt.level,
+      total_time_ms: 0,
+      wrong_count: 0,
+      correct_count: 0,
+      cleared_count: 0,
       result: "in_progress",
       last_activity: attempt.created_at,
     }));
@@ -253,24 +337,24 @@ async function ensureSessions(attempts: AttemptInput[], sessionIds: Set<string>,
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
-  if (!supabaseUrl || !serviceKey) return json({ error: "Thiếu cấu hình Supabase" }, 500);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
+  if (req.method !== "POST") return json(req, { error: "Method not allowed" }, 405);
+  if (!supabaseUrl || !serviceKey) return json(req, { error: "Thiếu cấu hình Supabase" }, 500);
 
   try {
     const rawBody = await req.text();
-    if (rawBody.length > 200_000) return json({ error: "Dữ liệu quá lớn" }, 413);
+    if (rawBody.length > 200_000) return json(req, { error: "Dữ liệu quá lớn" }, 413);
     const body = JSON.parse(rawBody) as Record<string, unknown>;
     const student = parseStudent(body.student);
-    if (!student) return json({ error: "Thông tin học sinh không hợp lệ" }, 400);
+    if (!student) return json(req, { error: "Thông tin học sinh không hợp lệ" }, 400);
     const studentId = await ensureStudent(student);
     const now = new Date().toISOString();
 
     if (body.action === "bootstrap") {
-      return json({ studentId, maxLevel: await maxLevelOf(studentId) });
+      return json(req, { studentId, maxLevel: await maxLevelOf(studentId) });
     }
 
-    if (body.action !== "sync") return json({ error: "Action không hợp lệ" }, 400);
+    if (body.action !== "sync") return json(req, { error: "Action không hợp lệ" }, 400);
 
     const sessions = parseSessions(body.sessions, studentId, now);
     const attempts = parseAttempts(body.attempts, studentId, now);
@@ -286,9 +370,9 @@ Deno.serve(async (req: Request) => {
       if (error) throw error;
     }
 
-    return json({ studentId, synced: { sessions: sessions.length, attempts: attempts.length } });
+    return json(req, { studentId, synced: { sessions: sessions.length, attempts: attempts.length } });
   } catch (error) {
     console.error("game-sync error", error);
-    return json({ error: "Không thể đồng bộ dữ liệu" }, 500);
+    return json(req, { error: "Không thể đồng bộ dữ liệu" }, 500);
   }
 });

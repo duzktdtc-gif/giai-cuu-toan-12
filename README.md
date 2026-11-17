@@ -1,34 +1,42 @@
-# Giải cứu Vương quốc Toán học
+# Giải cứu Vương quốc Toán – Hình học 12
 
-Game web **mobile-first** giúp học sinh lớp 12 ôn tập Toán theo phong cách phiêu lưu: mỗi câu trả lời đúng là một đòn đánh hạ gục quái vật, mỗi câu sai mất một trái tim. Trò chơi có 7 màn bám sát chương trình lớp 12, ngân hàng câu hỏi sinh ngẫu nhiên, lưu tiến độ offline và bảng điểm giáo viên bảo vệ bằng key phía máy chủ.
+Game web **mobile-first** ôn tập hình học không gian lớp 12 theo phong cách phiêu lưu. Học sinh chọn một trong **2 màn**, mỗi lượt có **5 câu trắc nghiệm**, **2 trái tim** và **5 phút**. Trả lời đúng để tấn công quái vật; trả lời sai sẽ mất một trái tim và được xem đáp án + lời giải.
 
-> Không sử dụng nhân vật có bản quyền. Toàn bộ hình ảnh là SVG/CSS/emoji tự vẽ.
+> Toàn bộ nhân vật, quái vật và hình minh họa là SVG/CSS/pixel art tự vẽ, không dùng tài sản có bản quyền. Âm thanh được tổng hợp trực tiếp bằng Web Audio API.
 
 ---
 
-## 1. Tính năng chính
+## 1. Tính năng
 
-### Dành cho học sinh
+### Học sinh
 
-- Nhập **tên**, **lớp**, chọn avatar (hoàng tử cứu công chúa hoặc công chúa cứu hoàng tử).
-- **3 trái tim**, vượt **7 màn**, màn 7 là trận đấu với Chúa Tể Bóng Tối.
-- Trả lời đúng: quái vật nhận đòn, mở màn tiếp theo.
-- Trả lời sai: mất 1 trái tim, hiện **đáp án đúng + lời giải từng bước**, sau đó làm một câu **tương tự nhưng khác số**.
-- Hết 3 trái tim: **Game Over**, cho phép chơi lại đúng màn đó với 3 trái tim mới; mỗi lần chơi lại được ghi thành một lượt riêng.
-- Câu hỏi gồm **trắc nghiệm 4 lựa chọn** (đã xáo trộn, không trùng nhau) và **trả lời ngắn dạng số** (chấp nhận `1,5`, `1.5`, `3/2`).
-- Chơi được **hoàn toàn offline**; khi có mạng và đã cấu hình Supabase, dữ liệu tự đồng bộ, lỗi mạng không làm gián đoạn game.
-- Tiến độ gắn với **tên + lớp đã chuẩn hoá** nên mở trên thiết bị khác vẫn nhận đúng hồ sơ.
-- Có nút bật/tắt âm thanh; giao diện tối ưu cho điện thoại.
+- Nhập họ tên, lớp, chọn hoàng tử hoặc công chúa.
+- Chọn tự do **Màn 1 – Góc giữa hai đường thẳng** hoặc **Màn 2 – Hai đường thẳng vuông góc**.
+- Mỗi lượt rút ngẫu nhiên **5 câu gốc** từ ngân hàng của màn; không trùng trong một lượt.
+- 4 đáp án được xáo trộn lại mỗi lần hiển thị; nhãn A–D gán lại sau khi xáo.
+- **2 trái tim**. Sai lần thứ hai là thua.
+- Đồng hồ **5 phút** cho cả lượt, tính bằng mốc `Date.now()` để không lệch khi tab chạy nền; đổi màu khi còn dưới 60 giây.
+- **Màn 1**: sai câu gốc → xem đáp án/lời giải → làm một **câu tương tự**. Câu tương tự đúng được tính là đã qua câu gốc đó. Câu tương tự sai → mất thêm một trái tim. Câu tương tự không bao giờ được rút làm câu chính.
+- **Màn 2**: không có câu tương tự. Sai → xem đáp án/lời giải (nếu có) → sang câu kế.
+- Thắng khi trả lời xong 5 câu gốc trong thời gian và còn ít nhất 1 trái tim.
+- Thua khi hết 2 trái tim hoặc hết giờ. Màn thua hiện đúng câu:
+  - Hoàng tử: **“Chưa học mà đòi giải cứu công chúa”**
+  - Công chúa: **“Chưa học mà đòi giải cứu hoàng tử”**
+- Nút **Thử lại** tạo lượt mới cùng màn với 5 câu rút lại (xáo trộn lại), 2 trái tim và 5 phút.
+- Không có lưu tiến trình giữa chừng và không có nút “chơi tiếp”. Thoát giữa chừng thì lượt đó được ghi là **bỏ dở**.
+- Chơi được offline sau lần tải đầu; dữ liệu đồng bộ lại khi có mạng.
+- Có nút bật/tắt âm thanh, giao diện tối ưu cho điện thoại.
 
-### Dành cho giáo viên
+### Giáo viên
 
-- Đăng nhập bằng **key giáo viên**. Key chỉ nằm ở biến môi trường phía máy chủ, không có trong mã nguồn trình duyệt.
-- Bảng điểm theo học sinh: lớp, số lượt chơi, màn cao nhất, tổng số lần sai, lần chơi gần nhất.
-- Lọc theo lớp, tìm theo tên.
-- Xem chi tiết từng học sinh: từng lượt chơi, từng câu trả lời (đề bài, tham số random, đáp án đã chọn, đáp án đúng, đúng/sai, số tim còn lại, thời gian làm).
-- Thống kê **tỉ lệ sai theo màn** và **theo từng dạng bài (template)**.
-- Xuất **CSV** cho danh sách học sinh và cho chi tiết từng học sinh.
-- Token đăng nhập có hạn **8 giờ**, lưu trong `sessionStorage`; hết hạn sẽ yêu cầu đăng nhập lại.
+- Đăng nhập bằng key giáo viên; key chỉ nằm trong Supabase Secrets, không có trong bundle trình duyệt.
+- Bảng điểm theo học sinh: họ tên, lớp, số lượt, thắng, thua theo lý do, tổng thời gian, số lần sai, màn gần nhất, lần chơi gần nhất.
+- Lọc theo lớp, theo màn và tìm theo tên.
+- Xem chi tiết từng học sinh: từng lượt chơi và từng câu trả lời (đề bài, 4 đáp án, đã chọn, đáp án đúng, đúng/sai, số tim còn lại, thời gian làm).
+- Thống kê tỉ lệ sai **theo màn** và **theo từng câu**; câu tương tự được đếm riêng.
+- Xuất CSV cho danh sách học sinh và cho chi tiết từng học sinh.
+- Cảnh báo rõ: **đáp án/lời giải hiện đang ở trạng thái tạm (`draft`), giáo viên phải duyệt trước khi dùng chính thức**.
+- Token đăng nhập có hạn 8 giờ, lưu trong `sessionStorage`.
 
 ---
 
@@ -37,61 +45,55 @@ Game web **mobile-first** giúp học sinh lớp 12 ôn tập Toán theo phong c
 | Thành phần | Công nghệ |
 | --- | --- |
 | Frontend | Vite, React 19, TypeScript |
-| Giao diện | Tailwind CSS v4, CSS/SVG tự viết |
+| Giao diện | Tailwind CSS v4, SVG/CSS tự viết |
 | Công thức toán | KaTeX |
-| Âm thanh | Web Audio API tổng hợp (không dùng file âm thanh) |
-| Lưu trữ offline | `localStorage` |
-| Backend (tuỳ chọn) | Supabase Postgres + Edge Functions (Deno) |
-| Kiểm thử | Vitest |
-| Triển khai | Vercel hoặc Netlify |
+| Âm thanh | Web Audio API tổng hợp |
+| Lưu offline | `localStorage` |
+| Backend | Supabase Postgres + Edge Functions (Deno) |
+| Kiểm thử | `node --test` (không thêm framework mới) |
+| Triển khai | GitHub Pages (kèm cấu hình Vercel/Netlify) |
 
 ---
 
-## 3. Cấu trúc thư mục
+## 3. Cấu trúc chính
 
 ```text
 .
+├── public/
+│   ├── config.js                 # URL + publishable key, nạp lúc chạy
+│   ├── data/level1.json          # 5 câu gốc + 5 câu tương tự
+│   ├── data/level2.json          # 5 câu gốc, không có câu tương tự
+│   └── .nojekyll
 ├── src/
-│   ├── App.tsx                  # Điều phối màn hình, khôi phục hồ sơ/lượt chơi
-│   ├── screens/                 # Menu, cốt truyện, chơi, kết thúc, giáo viên
+│   ├── App.tsx                   # Menu → chọn màn → chơi → kết thúc
+│   ├── screens/                  # Menu, LevelSelect, Game, End, Teacher
 │   ├── game/
-│   │   ├── levels.ts            # Thông tin 7 màn, quái vật, cốt truyện
-│   │   └── session.ts           # Tạo lượt, ghi câu trả lời, lên màn, kết thúc
-│   ├── questions/
-│   │   ├── level1.ts … level7.ts# 27 mẫu câu hỏi
-│   │   ├── types.ts             # Kiểu dữ liệu, prepareQuestion, validateQuestion
-│   │   ├── build.ts             # makeMC, defineTemplate
-│   │   ├── math.ts / rng.ts     # Helper toán và random có seed
-│   │   └── index.ts             # Registry template + chống trùng id
-│   ├── lib/
-│   │   ├── normalize.ts         # Chuẩn hoá tên/lớp, UUID ổn định
-│   │   ├── storage.ts           # localStorage an toàn
-│   │   ├── sync.ts              # Hàng đợi đồng bộ + retry/backoff
-│   │   └── teacherApi.ts        # Gọi Edge Function giáo viên
-│   ├── components/              # MathText, NightScene, PixelSprite, UI
-│   └── tests/questions.test.ts  # Test sinh câu hỏi
+│   │   ├── types.ts
+│   │   ├── levels.ts             # 2 màn, quái vật, lời thoại
+│   │   ├── bank.ts               # tải/validate JSON + cache offline
+│   │   ├── engine.js             # logic thuần, test bằng Node
+│   │   ├── session.ts            # tạo lượt, ghi attempt, kết thúc lượt
+│   │   └── catalog.ts            # nhãn câu hỏi cho dashboard
+│   ├── components/               # Figure (SVG), MathText, PixelSprite, UI
+│   └── lib/                      # config, storage, sync, teacherApi, format
+├── tests/
+│   ├── data.test.mjs             # kiểm tra ngân hàng câu hỏi
+│   └── engine.test.mjs           # kiểm tra luật chơi, xáo đáp án, đồng hồ
 ├── supabase/
 │   ├── migrations/20261116120000_init.sql
-│   ├── functions/game-sync/index.ts
-│   ├── functions/teacher/index.ts
-│   └── config.toml
-├── vercel.json                  # Rewrite SPA cho Vercel
-├── netlify.toml                 # Cấu hình build/redirect cho Netlify
-└── .env.example
+│   ├── migrations/20261117120000_two_levels.sql
+│   └── functions/game-sync, teacher
+├── .github/workflows/deploy-pages.yml
+└── README.md
 ```
 
----
-
-## 4. Yêu cầu môi trường
-
-- **Node.js 20+** (khuyến nghị LTS) và npm.
-- Trình duyệt hiện đại (Chrome, Edge, Safari, Firefox).
-- Tuỳ chọn: tài khoản [Supabase](https://supabase.com) và [Supabase CLI](https://supabase.com/docs/guides/cli) nếu muốn đồng bộ đám mây + bảng điểm giáo viên.
-- Tuỳ chọn: tài khoản Vercel/Netlify để triển khai.
+Các file cũ của phiên bản 7 màn (`src/questions/*`, `StoryScreen.tsx`) đã được thay thế. Migration cũ **không bị sửa**; migration mới bổ sung cột/view và giữ dữ liệu lịch sử.
 
 ---
 
-## 5. Chạy trên máy local
+## 4. Chạy trên máy
+
+Yêu cầu: **Node.js 20+** và npm.
 
 ```bash
 npm install
@@ -100,40 +102,45 @@ npm run dev
 
 Mở địa chỉ Vite in ra (mặc định `http://localhost:5173`).
 
-Không cần cấu hình gì thêm: game chạy ở chế độ **offline**, dữ liệu lưu trong `localStorage`. Khu vực giáo viên sẽ báo chưa cấu hình Supabase.
-
-### Các lệnh
-
 | Lệnh | Ý nghĩa |
 | --- | --- |
 | `npm run dev` | Chạy dev server |
 | `npm run build` | Kiểm tra TypeScript và build production vào `dist/` |
 | `npm run preview` | Xem thử bản build |
-| `npm test` | Chạy toàn bộ unit test một lần |
+| `npm test` | Chạy test dữ liệu + logic bằng `node --test` |
 | `npm run test:watch` | Chạy test ở chế độ watch |
 
 ---
 
-## 6. Cấu hình Supabase (tuỳ chọn nhưng cần cho bảng điểm)
+## 5. Cấu hình Supabase
 
-Nếu bỏ qua mục này, game vẫn chơi được nhưng **không có đồng bộ đa thiết bị và không có bảng điểm giáo viên**.
+Nếu bỏ qua mục này, game vẫn chơi offline và lưu kết quả trong `localStorage`; khu vực giáo viên sẽ báo chưa cấu hình.
 
-### 6.1. Tạo project
+### 5.1. Cấu hình frontend lúc chạy
 
-1. Tạo project mới trên [supabase.com](https://supabase.com).
-2. Ghi lại **Project URL** và **anon public key** trong *Project Settings → API*.
+Mở `public/config.js` và điền:
 
-### 6.2. Tạo schema
+```js
+window.__APP_CONFIG__ = {
+  supabaseUrl: "https://YOUR-PROJECT.supabase.co",
+  supabaseAnonKey: "YOUR-PUBLISHABLE-OR-ANON-KEY",
+  version: "2026-11-17.1",
+};
+```
 
-Chạy file migration `supabase/migrations/20261116120000_init.sql` bằng một trong hai cách:
+- Đây là URL và **publishable/anon key** — thông tin công khai dùng cho trình duyệt.
+- **Không đặt** `TEACHER_KEY`, `service_role` hoặc bất kỳ secret nào trong file này.
+- Không dùng `VITE_SUPABASE_*` khi build. `main.tsx` nạp `config.js` lúc chạy trước khi import App.
+- Đổi `version` mỗi khi cập nhật `public/data/*.json` để trình duyệt lấy dữ liệu mới.
 
-**Cách A — SQL Editor (nhanh):**
+### 5.2. Tạo schema
 
-1. Mở *SQL Editor* trong Supabase Dashboard.
-2. Dán toàn bộ nội dung file migration.
-3. Bấm **Run**.
+Chạy lần lượt hai migration:
 
-**Cách B — Supabase CLI:**
+1. `supabase/migrations/20261116120000_init.sql` (schema gốc)
+2. `supabase/migrations/20261117120000_two_levels.sql` (bổ sung cho 2 màn)
+
+Bằng Supabase CLI:
 
 ```bash
 supabase login
@@ -141,214 +148,182 @@ supabase link --project-ref <your-project-ref>
 supabase db push
 ```
 
-Migration tạo:
+Hoặc dán từng file vào SQL Editor và bấm **Run**.
 
-- Bảng `students`, `sessions`, `attempts`.
-- View `v_student_overview`, `v_level_stats`, `v_template_stats`.
-- Bật **RLS** trên cả 3 bảng và **không tạo policy** cho `anon`/`authenticated`.
-- Thu hồi quyền truy cập trực tiếp bảng/view khỏi `anon` và `authenticated`; chỉ `service_role` được đọc/ghi.
+Migration mới thêm:
 
-> Nhờ vậy, dù lộ anon key thì người ngoài cũng không đọc được bảng điểm qua PostgREST. Mọi truy vấn đi qua Edge Function dùng service role.
+- `sessions.level`, `total_time_ms`, `wrong_count`, `correct_count`, `cleared_count`.
+  - `cleared_count` là số ô câu gốc đã hoàn thành; ở Màn 2, trả lời sai vẫn được tính là đã đi qua ô đó.
+- `attempts.question_id`, `is_similar`, `chosen_index`, `correct_index`.
+- Các giá trị kết quả mới: `win`, `lose_lives`, `lose_timeout`, `abandoned` (vẫn giữ `victory`, `game_over` của dữ liệu cũ).
+- View mới `v_question_stats`; cập nhật `v_student_overview`, `v_level_stats`.
+- Index cho màn, câu hỏi và câu tương tự.
 
-### 6.3. Đặt secret cho Edge Functions
+RLS vẫn bật; `anon`/`authenticated` không đọc/ghi trực tiếp bảng hoặc view. Mọi truy cập đi qua Edge Function dùng service role.
 
-Key giáo viên **không bao giờ** đặt trong biến `VITE_*` hay mã nguồn frontend. Đặt bằng CLI:
+### 5.3. Secret cho Edge Functions
 
 ```bash
 supabase secrets set \
-  TEACHER_KEY="mat-khau-giao-vien-dai-va-kho-doan" \
-  TEACHER_TOKEN_SECRET="chuoi-bi-mat-ngau-nhien-it-nhat-32-ky-tu"
+  TEACHER_KEY="<key-giao-vien-do-ban-quan-ly>" \
+  TEACHER_TOKEN_SECRET="<chuoi-ngau-nhien-it-nhat-32-ky-tu>"
 ```
 
-Hoặc vào *Project Settings → Edge Functions → Secrets* và thêm hai biến trên.
+- `TEACHER_KEY`: key giáo viên. Key hiện tại do người dùng quản lý và **không được đổi** trong đợt cập nhật này.
+- `TEACHER_TOKEN_SECRET`: khoá ký HMAC cho token 8 giờ. Nếu không đặt, code dùng tạm `TEACHER_KEY`; nên đặt riêng.
+- `SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` do Supabase tự cấp cho function.
 
-- `TEACHER_KEY`: mật khẩu giáo viên dùng để đăng nhập. Nên dài, ngẫu nhiên, không trùng mật khẩu khác.
-- `TEACHER_TOKEN_SECRET`: khoá ký HMAC cho token phiên. Nếu không đặt, code sẽ dùng tạm `TEACHER_KEY`; **nên đặt riêng** một chuỗi ngẫu nhiên ≥ 32 ký tự.
-
-`SUPABASE_URL` và `SUPABASE_SERVICE_ROLE_KEY` do Supabase tự cấp cho Edge Function, không cần khai báo.
-
-### 6.4. Deploy Edge Functions
+### 5.4. Deploy Edge Functions
 
 ```bash
 supabase functions deploy game-sync teacher --no-verify-jwt
 ```
 
-Hai function đã được cấu hình `verify_jwt = false` trong `supabase/config.toml` vì:
+Hai function đã đặt `verify_jwt = false` trong `supabase/config.toml` vì:
 
-- `game-sync` nhận request từ học sinh (chỉ dùng anon key), và
-- `teacher` tự xác thực bằng key + token HMAC riêng.
+- `game-sync` nhận dữ liệu từ học sinh (chỉ dùng publishable key).
+- `teacher` tự xác thực bằng key + token HMAC.
 
-Có thể bỏ cờ `--no-verify-jwt` nếu đã dùng `config.toml`, nhưng thêm cờ này để chắc chắn.
+### 5.5. CORS
 
-### 6.5. Cấu hình frontend
+CORS **không dùng `*`**. Allowlist hiện tại:
 
-Tạo file `.env.local` (đã nằm trong `.gitignore`):
+- `https://duzktdtc-gif.github.io`
+- Mọi `http://localhost:<port>` và `http://127.0.0.1:<port>` khi phát triển.
 
-```env
-VITE_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
-VITE_SUPABASE_ANON_KEY=YOUR-ANON-KEY
-```
-
-Xem mẫu tại `.env.example`. Khởi động lại dev server sau khi đổi biến môi trường.
-
-Khi build production, khai báo đúng hai biến này trong phần Environment Variables của Vercel/Netlify.
+Nếu đổi tên miền hoặc tên tài khoản GitHub Pages, sửa `PRODUCTION_ORIGIN` trong cả hai function rồi deploy lại.
 
 ---
 
-## 7. Triển khai
+## 6. Triển khai GitHub Pages
 
-### Vercel
+Repo đang deploy tại:
 
-1. Import repository vào Vercel.
-2. Framework preset: **Vite**.
-3. Build command: `npm run build`; Output directory: `dist`.
-4. Thêm `VITE_SUPABASE_URL` và `VITE_SUPABASE_ANON_KEY` (nếu dùng Supabase).
-5. Deploy. `vercel.json` đã cấu hình rewrite mọi đường dẫn về `index.html`.
+**https://duzktdtc-gif.github.io/giai-cuu-toan-12/**
 
-### Netlify
+Workflow `.github/workflows/deploy-pages.yml` sẽ:
 
-1. Import repository vào Netlify.
-2. `netlify.toml` đã đặt sẵn:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
-   - Redirect SPA `/* → /index.html` (200)
-3. Thêm hai biến môi trường `VITE_*` trong *Site settings → Environment variables*.
-4. Deploy.
+1. Cài dependency bằng `npm ci`.
+2. Chạy `npm test`.
+3. Chạy `npm run build`.
+4. Upload `dist/` và deploy lên GitHub Pages.
 
-> Supabase Edge Functions chạy độc lập trên Supabase, không deploy cùng frontend. Sau khi deploy frontend, nhớ cấu hình CORS nếu thay đổi domain (hiện tại function cho phép `*`).
+Không cần khai báo `VITE_SUPABASE_*` trong GitHub Actions. Cấu hình Supabase nằm trong `public/config.js` và được copy vào `dist/config.js`.
 
-### GitHub Pages (đang dùng)
-
-Repo này được deploy tự động lên GitHub Pages:
-
-- URL: https://duzktdtc-gif.github.io/giai-cuu-toan-12/
-- Workflow: `.github/workflows/deploy-pages.yml`, chạy khi push lên `main` hoặc bấm chạy tay.
-- Mỗi lần deploy sẽ: cài dependency → chạy unit test → build → upload `dist` → deploy.
-- Khi chạy trong GitHub Actions, Vite tự dùng base `/giai-cuu-toan-12/`; khi chạy local/Vercel/Netlify vẫn dùng base `/`.
-
-Để bật Supabase cho bản GitHub Pages, vào *Settings → Secrets and variables → Actions → Variables* và thêm:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-
-Sau đó chạy lại workflow (hoặc push một commit mới). Nếu để trống, bản deploy vẫn chơi offline và khu vực giáo viên sẽ báo chưa cấu hình.
-
-> GitHub Pages miễn phí yêu cầu repo **public**. Nếu chuyển repo về private trên tài khoản free, trang sẽ ngừng hoạt động; khi đó dùng Vercel/Netlify hoặc GitHub Pro.
+`vite.config.ts` dùng `base: "./"` nên asset hoạt động cả ở đường dẫn con của GitHub Pages và ở tên miền gốc. `public/.nojekyll` tránh Jekyll bỏ qua file bắt đầu bằng dấu gạch dưới.
 
 ---
 
-## 8. Luật chơi và cách lưu dữ liệu
+## 7. Luật chơi và dữ liệu
 
 ### Luật chơi
 
-- Bắt đầu với 3 trái tim.
-- Đúng → hạ quái vật, sang màn kế.
-- Sai → mất 1 tim, xem lời giải, làm câu tương tự khác số.
-- Hết tim → Game Over; chơi lại **đúng màn đang dở** với 3 tim mới, ghi thành lượt mới.
-- Thắng màn 7 → Victory.
+- Mỗi lượt: 5 câu gốc, 2 trái tim, 5 phút.
+- Đúng → quái vật mất máu, sang câu kế.
+- Sai → mất 1 trái tim, xem đáp án + lời giải.
+  - Màn 1: làm câu tương tự. Đúng câu tương tự → qua câu gốc đó; sai → mất thêm tim.
+  - Màn 2: sang câu kế.
+- Hết 2 trái tim → thua vì hết mạng.
+- Hết 5 phút → thua vì hết giờ.
+- Hoàn thành 5 câu và còn ít nhất 1 trái tim → thắng.
+- Không lưu tiến trình giữa chừng. Mỗi lần vào màn là một lượt mới.
 
-### Danh tính học sinh
+Đồng hồ dùng mốc thời gian tuyệt đối (`Date.now()`), không cộng dồn `setInterval`. Khi hiện lời giải, đồng hồ tạm dừng nếu `PAUSE_TIMER_ON_EXPLANATION = true` (mặc định). Nếu đổi thành `false`, hết giờ vẫn thua ngay cả khi đang xem lời giải.
 
-- Tên được chuẩn hoá: Unicode NFC, trim, gộp khoảng trắng, **không phân biệt hoa thường**.
-- Lớp được chuẩn hoá: bỏ khoảng trắng, viết hoa (`12a1`, `12 A1` → `12A1`).
-- Khoá danh tính là cặp `(tên chuẩn hoá, lớp chuẩn hoá)`.
-- ID học sinh là UUID **ổn định**, sinh từ SHA-256 của `tên chuẩn hoá|lớp chuẩn hoá`, nên hai thiết bị nhập cùng tên + lớp sẽ ra cùng một hồ sơ.
-- Lượt chơi và câu trả lời dùng UUID do client sinh; ghi lên server bằng **upsert idempotent**, gửi lại nhiều lần không tạo bản trùng.
+### Danh tính và đồng bộ
 
-### Đồng bộ
+- Tên chuẩn hoá NFC, trim, gộp khoảng trắng, không phân biệt hoa thường.
+- Lớp bỏ khoảng trắng và viết hoa (`12a1`, `12 A1` → `12A1`).
+- ID học sinh là UUID ổn định sinh từ SHA-256 của `tên chuẩn hoá|lớp chuẩn hoá`.
+- Attempt và session dùng UUID client; server upsert idempotent nên gửi lại không tạo bản trùng.
+- Hàng đợi đồng bộ nằm trong `localStorage`; lỗi mạng không chặn game, tự thử lại với backoff.
+- Không có lệnh `bootstrap`/resume khi mở lại game.
 
-- Mọi thay đổi được đẩy vào hàng đợi trong `localStorage`.
-- Khi online, hàng đợi được gửi theo nhóm học sinh tới `game-sync`.
-- Lỗi mạng → giữ nguyên hàng đợi, thử lại với backoff (5s → tối đa 120s), không chặn game.
-- Khi mở lại game, app gọi `bootstrap` để lấy màn cao nhất đã đạt và gợi ý tiếp tục.
-
-### Các khoá localStorage
+### Khoá localStorage
 
 | Khoá | Nội dung |
 | --- | --- |
-| `gcs:v1:profiles` | Danh sách hồ sơ trên thiết bị |
+| `gcs:v1:profiles` | Hồ sơ trên thiết bị |
 | `gcs:v1:last-student` | Học sinh dùng gần nhất |
 | `gcs:v1:queue` | Hàng đợi đồng bộ |
-| `gcs:v1:settings` | Cài đặt (ví dụ âm thanh) |
+| `gcs:v1:settings` | Cài đặt âm thanh |
+| `gcs:v2:bank:1`, `gcs:v2:bank:2` | Cache ngân hàng câu hỏi để chơi offline |
 | `gcs:teacher-token` | Token giáo viên trong `sessionStorage` |
-
-Xoá dữ liệu trình duyệt sẽ xoá lịch sử offline; dữ liệu đã đồng bộ lên Supabase vẫn còn.
 
 ---
 
-## 9. Ngân hàng câu hỏi và cách thêm mẫu mới
+## 8. Ngân hàng câu hỏi và trạng thái duyệt
 
-Hiện có **27 mẫu**: 4 mẫu cho màn 1–6, 3 mẫu cho màn 7. Mỗi mẫu sinh đề ngẫu nhiên và tự tính đáp án + lời giải từ tham số, không hard-code đề.
+### Số lượng thực tế
 
-### Cấu trúc một mẫu
+Yêu cầu ban đầu ghi “khoảng 45 mục”, nhưng file Word thực tế chỉ có:
 
-Mở file `src/questions/levelN.ts` tương ứng và làm theo mẫu:
+- **Màn 1:** 5 câu gốc + 2 câu tương tự có sẵn (của Câu 4 và Câu 5) = **7 mục**.
+- **Màn 2:** 5 câu gốc, không có câu tương tự = **5 mục**.
 
-```ts
-import { makeMC, defineTemplate } from "./build";
-import { randInt } from "./rng";
-import type { GeneratedQuestion, QuestionTemplate } from "./types";
+Tổng cộng **12 mục từ file** (10 câu gốc + 2 câu tương tự). Để Màn 1 có đủ câu tương tự cho cả 5 câu gốc, bản này bổ sung **3 câu tương tự nháp** cho Câu 1-3. Ngân hàng hiện tại:
 
-const myTemplate: QuestionTemplate = defineTemplate(
-  {
-    id: "l1-my-new-template", // phải duy nhất, bắt đầu bằng lN-
-    level: 1,
-    topic: "Tính đơn điệu của hàm số",
-    title: "Tên hiển thị ngắn gọn",
-  },
-  (rng = Math.random): GeneratedQuestion => {
-    const a = randInt(rng, 1, 5);
-    // ... tính toán đáp án và các bước giải từ a
+- `public/data/level1.json`: **10 câu** = 5 gốc + 5 tương tự.
+- `public/data/level2.json`: **5 câu** = 5 gốc.
 
-    return makeMC({
-      template: myTemplate,
-      prompt: `Đề bài có thể trộn LaTeX trong $...$, ví dụ $f(x)=x^${a}$.`,
-      correctLatex: "đáp án đúng dạng LaTeX",
-      distractors: ["nhiễu 1", "nhiễu 2", "nhiễu 3"],
-      params: { a },              // lưu để giáo viên đối chiếu
-      solution: [                 // từng bước, cũng trộn LaTeX trong $...$
-        "Bước 1...",
-        "Bước 2...",
-      ],
-    });
-  },
-);
+### Đáp án và lời giải
+
+- Toàn bộ đáp án đánh dấu `answerStatus: "draft"`. Bảng đáp án trong file Word là tạm thời; **giáo viên phải xác nhận lại**.
+- Màn 1 có lời giải cho cả 5 câu gốc và 5 câu tương tự.
+  - Câu 4, Câu 5 giữ lời giải gốc từ file Word (`solutionStatus: "reviewed"`).
+  - Câu 1–3 và các câu tương tự 1–3 có lời giải do AI soạn (`solutionStatus: "draft"`).
+- Màn 2 không bắt buộc có lời giải; bản này có lời giải ngắn cho cả 5 câu nhưng đều đánh dấu `draft` để giáo viên duyệt.
+
+### Lưu ý đặc biệt ở Màn 1 – Câu 4
+
+Phương án nhiễu gốc **"AB và CC'"** cũng tạo với AB một góc 90°, trùng với đáp án đúng, nên đề gốc có thể có hai phương án đúng. Bản này đã thay bằng **"AB và A'C"** (góc khác 90°) để chỉ còn một đáp án đúng, đồng thời ghi chú trong `level1.json`. Giáo viên cần duyệt lại phương án này.
+
+### Cách thêm/sửa câu
+
+Sửa trực tiếp `public/data/level1.json` hoặc `level2.json`. Mỗi câu có dạng:
+
+```json
+{
+  "id": "m1-q06",
+  "level": 1,
+  "topic": "goc-hai-duong-thang",
+  "stem": "Đề bài, công thức trong $...$",
+  "figure": { "type": "cube", "highlight": ["AB", "B'C'"] },
+  "options": ["...", "...", "...", "..."],
+  "correct": 0,
+  "solution": ["Bước 1...", "Bước 2..."],
+  "similarId": "m1-q06s",
+  "answerStatus": "draft",
+  "solutionStatus": "draft",
+  "isSimilar": false
+}
 ```
 
-Sau đó thêm mẫu vào mảng export cuối file:
+Quy tắc:
 
-```ts
-export const level1Templates: QuestionTemplate[] = [
-  // ... các mẫu cũ
-  myTemplate,
-];
-```
+- Đúng **4 đáp án**, không trùng nhau, `correct` là chỉ số 0–3.
+- `id` duy nhất trong màn.
+- Câu gốc Màn 1 phải có `similarId` trỏ tới một câu `isSimilar: true` cùng màn.
+- Câu tương tự không được có `similarId` và không bao giờ được rút làm câu chính.
+- Hình minh họa dùng `type: "cube"` với `highlight` là các cặp đỉnh, hoặc `type: "lines"` với `mode` (`angle`, `parallel`, `coincident`, `perpendicular`, `skew`, `three`).
+- Chạy `npm test` sau khi sửa; test sẽ kiểm tra cấu trúc, đáp án trùng, mã LaTeX sót lại và liên kết câu tương tự.
 
-### Quy tắc cần tuân thủ
+---
 
-- `id` duy nhất toàn hệ thống; registry ở `src/questions/index.ts` sẽ báo lỗi nếu trùng.
-- `makeMC` yêu cầu **đúng 3 đáp án nhiễu phân biệt** và khác đáp án đúng; nếu không đủ sẽ throw.
-- Đáp án nhiễu phải **thực sự sai** về mặt toán học — kiểm tra kỹ để tránh nhiều đáp án cùng đúng.
-- Với câu trả lời ngắn, trả về object có `kind: "short"`, `answerLatex`, `answerValue` (số) và tuỳ chọn `tolerance` (mặc định `0.01`).
-- Lời giải nên có ít nhất 2 bước và bám theo tham số đã random.
-- `level` trong metadata phải khớp file/màn.
-
-### Kiểm thử tự động
+## 9. Kiểm thử
 
 ```bash
 npm test
+npx tsc --noEmit
+npm run build
 ```
 
-Test sẽ:
+`npm test` dùng `node --test` với 2 file:
 
-- Kiểm tra mỗi màn có tối thiểu 3 mẫu và id không trùng.
-- Với **mỗi mẫu**, sinh **200 câu** bằng RNG có seed, xác nhận:
-  - đề bài và lời giải không rỗng,
-  - trắc nghiệm có đúng 4 lựa chọn, đúng 1 đáp án đúng, không trùng nhau,
-  - `answerIndex` trỏ đúng,
-  - câu ngắn có đáp án số hợp lệ,
-  - sinh lại sau khi sai cho đề khác.
-- Kiểm tra parser số (`1,5`, `1.5`, `3/2`, số âm).
+- `tests/data.test.mjs`: đếm câu gốc/tương tự, kiểm tra 4 đáp án khác nhau, đáp án đúng, lời giải Màn 1, liên kết `similarId`, hình SVG hợp lệ, không còn `\item`, `\textbf`, `\end{center}`, “Chọn A”...
+- `tests/engine.test.mjs`: xáo đáp án, rút 5 câu gốc, không rút câu tương tự, đồng hồ, thông điệp thua, sai 2 lần là thua, Màn 1 đi qua câu tương tự, Màn 2 không có bước tương tự, hết giờ kể cả khi đang xem lời giải nếu `PAUSE_TIMER=false`.
+
+Không cần cài thêm framework test.
 
 ---
 
@@ -356,56 +331,51 @@ Test sẽ:
 
 ### Dữ liệu thu thập
 
-- Tên hiển thị, lớp, avatar.
-- Lượt chơi: thời điểm bắt đầu/kết thúc, màn bắt đầu, màn cao nhất, kết quả.
-- Câu trả lời: màn, mã mẫu, tham số random, đề bài, lựa chọn, đáp án đã chọn, đáp án đúng, đúng/sai, số tim còn lại, thời gian làm.
+- Họ tên hiển thị, lớp, avatar.
+- Lượt chơi: màn, thời điểm bắt đầu/kết thúc, tổng thời gian, số câu đúng/sai, kết quả.
+- Câu trả lời: mã câu, câu gốc/tương tự, đề bài, 4 đáp án, đã chọn, đáp án đúng, đúng/sai, số tim còn lại, thời gian làm.
 
-Không thu thập email, số điện thoại, vị trí, cookies quảng cáo hay dữ liệu theo dõi bên thứ ba.
+Không thu thập email, số điện thoại, vị trí, cookie quảng cáo hay dữ liệu theo dõi bên thứ ba.
 
-### Nơi lưu
+### Bảo vệ
 
-- Mặc định: chỉ trong `localStorage` trên thiết bị.
-- Nếu cấu hình Supabase: thêm bản sao trên Postgres của project bạn quản lý.
-
-### Biện pháp bảo vệ
-
-- RLS bật, không policy cho `anon`/`authenticated`.
-- Thu hồi quyền trực tiếp trên bảng và view; chỉ service role trong Edge Function truy cập.
-- Key giáo viên chỉ ở server, so sánh constant-time (qua SHA-256 + XOR).
-- Token phiên ký HMAC-SHA256, hết hạn sau 8 giờ, kiểm tra chữ ký + hạn mỗi request.
-- Frontend chỉ giữ token trong `sessionStorage` (mất khi đóng tab).
+- RLS bật trên `students`, `sessions`, `attempts`; không policy cho `anon`/`authenticated`.
+- Thu hồi quyền trực tiếp trên bảng/view; chỉ service role trong Edge Function truy cập.
+- Key giáo viên chỉ ở server, so sánh constant-time qua SHA-256 + XOR.
+- Token phiên ký HMAC-SHA256, hết hạn sau 8 giờ.
+- Frontend chỉ giữ token trong `sessionStorage`.
+- CORS giới hạn đúng origin GitHub Pages + localhost, không dùng `*`.
 
 ### Giới hạn cần biết
 
-- `game-sync` là endpoint công khai có chủ đích (học sinh không có tài khoản). Người biết URL project + anon key **có thể gửi dữ liệu giả**. Vì vậy không dùng dữ liệu này cho đánh giá điểm chính thức nếu không bổ sung xác thực thiết bị/rate limit.
-- Anon key luôn công khai trong bundle frontend; đây là thiết kế của Supabase. Việc bảo vệ dữ liệu dựa vào RLS + Edge Function, không dựa vào việc giấu anon key.
-- Không có mã hoá riêng ở tầng ứng dụng; dữ liệu được bảo vệ theo hạ tầng Supabase.
-- Không có cơ chế tự động xoá dữ liệu. Quản trị viên cần tự đặt chính sách lưu trữ/xoá.
-- Nên dùng key giáo viên mạnh và đổi định kỳ; nếu key lộ, người khác có thể xem toàn bộ bảng điểm.
+- `game-sync` là endpoint công khai có chủ đích (học sinh không có tài khoản). Người biết URL project + publishable key có thể gửi dữ liệu giả. Không dùng dữ liệu này cho đánh giá điểm chính thức nếu chưa bổ sung xác thực/rate limit.
+- Publishable/anon key luôn công khai trong bundle; bảo vệ dựa vào RLS + Edge Function, không dựa vào việc giấu key.
+- Không có mã hoá riêng ở tầng ứng dụng.
+- Không có cơ chế tự động xoá dữ liệu; quản trị viên tự đặt chính sách lưu trữ.
+- Nên dùng key giáo viên mạnh và đổi định kỳ nếu nghi lộ.
 
 ---
 
 ## 11. Hạn chế đã biết
 
-- Bundle JS ~580 kB (gzip ~177 kB) do KaTeX; có thể code-split nếu cần tối ưu sâu hơn.
-- Chưa có tài khoản học sinh; danh tính dựa trên tên + lớp nên hai học sinh trùng tên trong cùng lớp sẽ chung hồ sơ.
+- Màn 1 hiện chỉ có đúng 5 câu gốc, nên mỗi lượt dùng cả 5; chỉ thứ tự câu và thứ tự đáp án thay đổi. Muốn đa dạng hơn cần thêm câu gốc vào JSON.
+- Mỗi câu gốc Màn 1 có đúng một câu tương tự.
+- Đáp án/lời giải đang `draft`, chưa được giáo viên duyệt chính thức.
+- Chưa có tài khoản học sinh; hai học sinh trùng tên trong cùng lớp sẽ chung hồ sơ.
 - Chưa có rate limiting cho `game-sync` và `teacher`.
-- Chưa có test E2E tự động trong repo; unit test tập trung vào sinh câu hỏi.
-- Bảng điểm tải tối đa 2000 học sinh và 1000 câu trả lời/học sinh mỗi lần xem chi tiết (đủ cho quy mô lớp học).
+- Chưa có test E2E tự động; test hiện tập trung vào dữ liệu và logic thuần.
+- Dashboard tải tối đa 2000 học sinh và 1000 câu trả lời/học sinh mỗi lần xem chi tiết.
+- Dữ liệu 7 màn cũ vẫn hiển thị trong dashboard với nhãn “Màn N (cũ)”.
 
 ---
 
-## 12. Kiểm tra trước khi bàn giao
+## 12. Checklist trước khi bàn giao
 
-```bash
-npm test          # 57 test, sinh 200 câu/mẫu
-npx tsc --noEmit  # kiểm tra kiểu
-npm run build     # build production
-```
-
-Nếu dùng Supabase, kiểm tra thêm:
-
-1. Đăng nhập giáo viên bằng `TEACHER_KEY` → xem được bảng điểm.
-2. Chơi một lượt trên điện thoại → dữ liệu xuất hiện sau khi đồng bộ.
-3. Mở cùng tên + lớp trên thiết bị khác → nhận đúng hồ sơ.
-4. Gọi trực tiếp `https://<project>.supabase.co/rest/v1/students?select=*` với anon key → phải bị từ chối.
+1. Giáo viên duyệt lại **toàn bộ đáp án `draft`** và các lời giải `draft`, đặc biệt phương án đã sửa ở Màn 1 – Câu 4.
+2. Chạy `npm test`, `npx tsc --noEmit`, `npm run build`.
+3. Chạy migration mới và deploy lại `game-sync`, `teacher`.
+4. Kiểm tra CORS từ đúng origin GitHub Pages; thử một request từ origin lạ phải bị chặn.
+5. Chơi thử một lượt Màn 1 và một lượt Màn 2 trên điện thoại; kiểm tra câu tương tự, hết tim, hết giờ.
+6. Đăng nhập giáo viên, kiểm tra bộ lọc lớp/màn, chi tiết từng câu và xuất CSV.
+7. Kiểm tra `public/config.js` không chứa `TEACHER_KEY`, `service_role` hoặc secret.
+8. Kiểm tra lịch sử git không có `.env.local`, `supabase/.env.local` hoặc key giáo viên.

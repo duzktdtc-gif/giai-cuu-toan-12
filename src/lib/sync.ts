@@ -1,8 +1,8 @@
-import type { StudentIdentity, StudentProfile, SyncQueueItem } from "./models";
+import type { StudentIdentity, SyncQueueItem } from "./models";
 import { loadQueue, saveQueue } from "./storage";
+import { getSupabaseConfig } from "./appConfig";
 
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL ?? "").trim().replace(/\/$/, "");
-const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? "").trim();
+const { url: supabaseUrl, anonKey } = getSupabaseConfig();
 
 export const supabaseConfigured =
   Boolean(supabaseUrl && anonKey) &&
@@ -77,15 +77,42 @@ export async function flushSync(): Promise<boolean> {
 
     const doneIds = new Set<string>();
     for (const group of groups.values()) {
-      const body = {
-        action: "sync",
-        student: group.student,
-        sessions: group.sessions.map((item) => (item.kind === "session" ? item.session : null)).filter(Boolean),
-        attempts: group.attempts.map((item) => (item.kind === "attempt" ? item.attempt : null)).filter(Boolean),
-      };
-      await postJson(functionUrl("game-sync"), body);
-      for (const item of [...group.sessions, ...group.attempts]) {
-        doneIds.add(item.kind === "session" ? `s:${item.session.id}` : `a:${item.attempt.id}`);
+      // Cùng một session có thể xuất hiện nhiều lần (in_progress rồi kết thúc).
+      // Chỉ gửi bản mới nhất để upsert không đụng khóa hai lần trong một câu lệnh.
+      const sessions = new Map<string, Extract<SyncQueueItem, { kind: "session" }>["session"]>();
+      for (const item of group.sessions) {
+        if (item.kind !== "session") continue;
+        const previous = sessions.get(item.session.id);
+        if (!previous || item.session.lastActivity >= previous.lastActivity) {
+          sessions.set(item.session.id, item.session);
+        }
+      }
+      const attempts = new Map<string, Extract<SyncQueueItem, { kind: "attempt" }>["attempt"]>();
+      for (const item of group.attempts) {
+        if (item.kind !== "attempt") continue;
+        attempts.set(item.attempt.id, item.attempt);
+      }
+      const sessionList = [...sessions.values()];
+      const attemptList = [...attempts.values()];
+      let sessionIndex = 0;
+      let attemptIndex = 0;
+      // Edge Function chỉ nhận tối đa 20 session và 60 attempt mỗi request.
+      // Chia lô để không mất dữ liệu khi hàng đợi offline dài.
+      while (sessionIndex < sessionList.length || attemptIndex < attemptList.length) {
+        const sessionBatch = sessionList.slice(sessionIndex, sessionIndex + 20);
+        const attemptBatch = attemptList.slice(attemptIndex, attemptIndex + 40);
+        if (!sessionBatch.length && !attemptBatch.length) break;
+        const body = {
+          action: "sync",
+          student: group.student,
+          sessions: sessionBatch,
+          attempts: attemptBatch,
+        };
+        await postJson(functionUrl("game-sync"), body);
+        for (const session of sessionBatch) doneIds.add(`s:${session.id}`);
+        for (const attempt of attemptBatch) doneIds.add(`a:${attempt.id}`);
+        sessionIndex += sessionBatch.length;
+        attemptIndex += attemptBatch.length;
       }
     }
 
@@ -109,24 +136,6 @@ export function requestSync(delayMs = 900): void {
   retryTimer = window.setTimeout(() => {
     void flushSync();
   }, delayMs);
-}
-
-export async function bootstrapStudent(profile: StudentProfile): Promise<number | null> {
-  if (!supabaseConfigured) return null;
-  try {
-    const result = await postJson<{ maxLevel?: number }>(functionUrl("game-sync"), {
-      action: "bootstrap",
-      student: {
-        id: profile.id,
-        name: profile.name,
-        className: profile.className,
-        avatar: profile.avatar,
-      },
-    });
-    return typeof result.maxLevel === "number" ? result.maxLevel : null;
-  } catch {
-    return null;
-  }
 }
 
 if (typeof window !== "undefined") {

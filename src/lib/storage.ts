@@ -37,7 +37,23 @@ function parse<T>(raw: string | null, fallback: T): T {
 
 export function loadProfiles(): StudentProfile[] {
   const profiles = parse<StudentProfile[]>(safeGet(PROFILES_KEY), []);
-  return Array.isArray(profiles) ? profiles : [];
+  if (!Array.isArray(profiles)) return [];
+  const epoch = new Date(0).toISOString();
+  return profiles
+    .filter((profile) => profile && typeof profile.id === "string" && typeof profile.name === "string")
+    .map((profile) => ({
+      ...profile,
+      sessionsCount: Number(profile.sessionsCount) || 0,
+      runsByLevel: profile.runsByLevel ?? {},
+      winsByLevel: profile.winsByLevel ?? {},
+      createdAt: typeof profile.createdAt === "string" ? profile.createdAt : epoch,
+      lastPlayed:
+        typeof profile.lastPlayed === "string"
+          ? profile.lastPlayed
+          : typeof profile.createdAt === "string"
+            ? profile.createdAt
+            : epoch,
+    }));
 }
 
 export function saveProfiles(profiles: StudentProfile[]): void {
@@ -51,8 +67,8 @@ export function loadProfile(id: string): StudentProfile | undefined {
 export function saveProfile(profile: StudentProfile): void {
   const profiles = loadProfiles();
   const index = profiles.findIndex((item) => item.id === profile.id);
-  if (index >= 0) profiles[index] = profile;
-  else profiles.push(profile);
+  if (index >= 0) profiles.splice(index, 1);
+  profiles.push(profile);
   saveProfiles(profiles);
 }
 

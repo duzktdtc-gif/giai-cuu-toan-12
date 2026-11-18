@@ -52,8 +52,17 @@ test("mỗi câu có đúng 4 đáp án khác nhau và một đáp án đúng", 
       assert.ok(Array.isArray(question.solution) && question.solution.length > 0, `${question.id}: thiếu lời giải`);
       assert.ok(question.stem.trim().length > 20, `${question.id}: đề bài quá ngắn`);
       assert.ok(question.topic.trim().length > 0, `${question.id}: thiếu topic`);
-      assert.equal(question.answerStatus, "draft", `${question.id}: đáp án phải được đánh dấu draft`);
       checkFigure(question);
+    }
+  }
+});
+
+test("answerStatus và solutionStatus chỉ nhận draft hoặc reviewed", () => {
+  const allowed = new Set(["draft", "reviewed"]);
+  for (const bank of banks) {
+    for (const question of bank) {
+      assert.ok(allowed.has(question.answerStatus), `${question.id}: answerStatus không hợp lệ`);
+      assert.ok(allowed.has(question.solutionStatus), `${question.id}: solutionStatus không hợp lệ`);
     }
   }
 });

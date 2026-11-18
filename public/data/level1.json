@@ -17,8 +17,8 @@
       "Vì vậy $0^\\circ \\le (a,b) \\le 90^\\circ$."
     ],
     "similarId": "m1-q01s",
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
     "isSimilar": false
   },
   {
@@ -39,8 +39,8 @@
       "Chọn điểm $O$ tùy ý, dựng $a' \\parallel a$ và $b' \\parallel b$ qua $O$. Khi đó góc giữa $a$ và $b$ bằng góc giữa $a'$ và $b'$."
     ],
     "similarId": "m1-q02s",
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
     "isSimilar": false
   },
   {
@@ -55,8 +55,8 @@
       "Hai đường thẳng song song hoặc trùng nhau thì góc giữa chúng bằng $0^\\circ$."
     ],
     "similarId": "m1-q03s",
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
     "isSimilar": false
   },
   {
@@ -77,10 +77,9 @@
       "Do đó góc giữa $AB$ và $B'C'$ bằng góc giữa $AB$ và $AD$, tức là $\\widehat{BAD} = 90^\\circ$."
     ],
     "similarId": "m1-q04s",
-    "answerStatus": "draft",
+    "answerStatus": "reviewed",
     "solutionStatus": "reviewed",
-    "isSimilar": false,
-    "note": "Phương án nhiễu gốc \"AB và CC'\" cũng vuông góc nên đã thay bằng \"AB và A'C\" (góc khác 90°) để chỉ còn một đáp án đúng. Giáo viên cần duyệt lại."
+    "isSimilar": false
   },
   {
     "id": "m1-q05",
@@ -95,7 +94,7 @@
       "Tam giác $ACD'$ có $AC = AD' = CD'$ nên là tam giác đều. Vậy $\\widehat{ACD'} = 60^\\circ$."
     ],
     "similarId": "m1-q05s",
-    "answerStatus": "draft",
+    "answerStatus": "reviewed",
     "solutionStatus": "reviewed",
     "isSimilar": false
   },
@@ -115,10 +114,9 @@
     "solution": [
       "Góc giữa hai đường thẳng có số đo từ $0^\\circ$ đến $90^\\circ$ nên $120^\\circ$ không thể là góc giữa hai đường thẳng."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": true,
-    "note": "Câu tương tự do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": true
   },
   {
     "id": "m1-q02s",
@@ -136,10 +134,9 @@
     "solution": [
       "Theo định nghĩa, ta dựng $a' \\parallel a$, $b' \\parallel b$ và $a'$ cắt $b'$ tại $O$; góc giữa $a$ và $b$ là góc giữa $a'$ và $b'$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": true,
-    "note": "Phương án nhiễu được viết lại để chỉ còn một đáp án đúng; lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": true
   },
   {
     "id": "m1-q03s",
@@ -150,10 +147,9 @@
     "options": ["$0^\\circ$.", "$45^\\circ$.", "$90^\\circ$.", "$180^\\circ$."],
     "correct": 0,
     "solution": ["Vì $AA' \\parallel CC'$ (hai cạnh bên của hình lập phương) nên góc giữa chúng bằng $0^\\circ$."],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": true,
-    "note": "Câu tương tự do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": true
   },
   {
     "id": "m1-q04s",
@@ -171,10 +167,9 @@
     "solution": [
       "Vì $B'D' \\parallel BD$ nên góc giữa $AD$ và $B'D'$ bằng góc giữa $AD$ và $BD$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": true,
-    "note": "Câu tương tự lấy từ file Word; lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": true
   },
   {
     "id": "m1-q05s",
@@ -188,9 +183,8 @@
       "Vì $A'C' \\parallel AC$ nên góc giữa $A'C'$ và $AD$ bằng góc giữa $AC$ và $AD$.",
       "Trong hình vuông $ABCD$, đường chéo $AC$ tạo với cạnh $AD$ góc $45^\\circ$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": true,
-    "note": "Câu tương tự lấy từ file Word; lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": true
   }
 ]

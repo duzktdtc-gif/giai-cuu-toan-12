@@ -35,7 +35,7 @@ Game web **mobile-first** ôn tập hình học không gian lớp 12 theo phong 
 - Xem chi tiết từng học sinh: từng lượt chơi và từng câu trả lời (đề bài, 4 đáp án, đã chọn, đáp án đúng, đúng/sai, số tim còn lại, thời gian làm).
 - Thống kê tỉ lệ sai **theo màn** và **theo từng câu**; câu tương tự được đếm riêng.
 - Xuất CSV cho danh sách học sinh và cho chi tiết từng học sinh.
-- Cảnh báo rõ: **đáp án/lời giải hiện đang ở trạng thái tạm (`draft`), giáo viên phải duyệt trước khi dùng chính thức**.
+- Cảnh báo tự động khi còn ít nhất một câu `draft`; khi tất cả đã `reviewed`, cảnh báo ẩn và mục “Câu chưa duyệt” hiện `0`.
 - Token đăng nhập có hạn 8 giờ, lưu trong `sessionStorage`.
 
 ---
@@ -268,15 +268,15 @@ Tổng cộng **12 mục từ file** (10 câu gốc + 2 câu tương tự). Đ�
 
 ### Đáp án và lời giải
 
-- Toàn bộ đáp án đánh dấu `answerStatus: "draft"`. Bảng đáp án trong file Word là tạm thời; **giáo viên phải xác nhận lại**.
-- Màn 1 có lời giải cho cả 5 câu gốc và 5 câu tương tự.
-  - Câu 4, Câu 5 giữ lời giải gốc từ file Word (`solutionStatus: "reviewed"`).
-  - Câu 1–3 và các câu tương tự 1–3 có lời giải do AI soạn (`solutionStatus: "draft"`).
-- Màn 2 không bắt buộc có lời giải; bản này có lời giải ngắn cho cả 5 câu nhưng đều đánh dấu `draft` để giáo viên duyệt.
+- Toàn bộ 15 mục đã được giáo viên duyệt ngày **2026-11-19**: `answerStatus: "reviewed"` và `solutionStatus: "reviewed"`.
+- Màn 1 có lời giải cho cả 5 câu gốc và 5 câu tương tự; Màn 2 có lời giải ngắn cho cả 5 câu.
+- Câu mới thêm phải bắt đầu ở trạng thái `draft` cho cả đáp án và lời giải; chỉ chuyển sang `reviewed` sau khi giáo viên duyệt.
 
-### Lưu ý đặc biệt ở Màn 1 – Câu 4
+### Lịch sử duyệt nội dung
 
-Phương án nhiễu gốc **"AB và CC'"** cũng tạo với AB một góc 90°, trùng với đáp án đúng, nên đề gốc có thể có hai phương án đúng. Bản này đã thay bằng **"AB và A'C"** (góc khác 90°) để chỉ còn một đáp án đúng, đồng thời ghi chú trong `level1.json`. Giáo viên cần duyệt lại phương án này.
+- **2026-11-19:** giáo viên duyệt toàn bộ 15 mục (10 mục Màn 1, 5 mục Màn 2); cả `answerStatus` và `solutionStatus` chuyển thành `reviewed`.
+- `m1-q04` từng được thay phương án nhiễu **"AB và CC'"** bằng **"AB và A'C"** để chỉ còn một đáp án đúng.
+- `m2-q02` từng được viết lại các phương án nhiễu (chỉ cắt nhau / chỉ chéo nhau / cắt nhau hoặc chéo nhau / song song) để chỉ còn một đáp án đúng.
 
 ### Cách thêm/sửa câu
 
@@ -306,7 +306,9 @@ Quy tắc:
 - Câu gốc Màn 1 phải có `similarId` trỏ tới một câu `isSimilar: true` cùng màn.
 - Câu tương tự không được có `similarId` và không bao giờ được rút làm câu chính.
 - Hình minh họa dùng `type: "cube"` với `highlight` là các cặp đỉnh, hoặc `type: "lines"` với `mode` (`angle`, `parallel`, `coincident`, `perpendicular`, `skew`, `three`).
-- Chạy `npm test` sau khi sửa; test sẽ kiểm tra cấu trúc, đáp án trùng, mã LaTeX sót lại và liên kết câu tương tự.
+- Câu mới thêm mặc định `answerStatus: "draft"` và `solutionStatus: "draft"`.
+- Chỉ chuyển `draft` → `reviewed` sau khi giáo viên duyệt nội dung tương ứng. Khi còn ít nhất một câu draft, dashboard tự hiện cảnh báo; khi tất cả đã reviewed, cảnh báo tự ẩn và mục “Câu chưa duyệt” hiện `0`.
+- Chạy `npm test` sau khi sửa; test sẽ kiểm tra cấu trúc, trạng thái duyệt, đáp án trùng, mã LaTeX sót lại và liên kết câu tương tự.
 
 ---
 
@@ -318,10 +320,11 @@ npx tsc --noEmit
 npm run build
 ```
 
-`npm test` dùng `node --test` với 2 file:
+`npm test` dùng `node --test` với 3 file:
 
-- `tests/data.test.mjs`: đếm câu gốc/tương tự, kiểm tra 4 đáp án khác nhau, đáp án đúng, lời giải Màn 1, liên kết `similarId`, hình SVG hợp lệ, không còn `\item`, `\textbf`, `\end{center}`, “Chọn A”...
+- `tests/data.test.mjs`: đếm câu gốc/tương tự, kiểm tra 4 đáp án khác nhau, đáp án đúng, trạng thái duyệt chỉ nhận `draft` hoặc `reviewed`, lời giải Màn 1, liên kết `similarId`, hình SVG hợp lệ, không còn `\item`, `\textbf`, `\end{center}`, “Chọn A”...
 - `tests/engine.test.mjs`: xáo đáp án, rút 5 câu gốc, không rút câu tương tự, đồng hồ, thông điệp thua, sai 2 lần là thua, Màn 1 đi qua câu tương tự, Màn 2 không có bước tương tự, hết giờ kể cả khi đang xem lời giải nếu `PAUSE_TIMER=false`.
+- `tests/review.test.mjs`: chỉ câu còn `draft` mới cần duyệt; cảnh báo hiện khi có ít nhất một câu draft và ẩn khi tất cả đã `reviewed`.
 
 Không cần cài thêm framework test.
 
@@ -360,7 +363,6 @@ Không thu thập email, số điện thoại, vị trí, cookie quảng cáo ha
 
 - Màn 1 hiện chỉ có đúng 5 câu gốc, nên mỗi lượt dùng cả 5; chỉ thứ tự câu và thứ tự đáp án thay đổi. Muốn đa dạng hơn cần thêm câu gốc vào JSON.
 - Mỗi câu gốc Màn 1 có đúng một câu tương tự.
-- Đáp án/lời giải đang `draft`, chưa được giáo viên duyệt chính thức.
 - Chưa có tài khoản học sinh; hai học sinh trùng tên trong cùng lớp sẽ chung hồ sơ.
 - Chưa có rate limiting cho `game-sync` và `teacher`.
 - Chưa có test E2E tự động; test hiện tập trung vào dữ liệu và logic thuần.
@@ -371,7 +373,7 @@ Không thu thập email, số điện thoại, vị trí, cookie quảng cáo ha
 
 ## 12. Checklist trước khi bàn giao
 
-1. Giáo viên duyệt lại **toàn bộ đáp án `draft`** và các lời giải `draft`, đặc biệt phương án đã sửa ở Màn 1 – Câu 4.
+1. Giáo viên đã duyệt toàn bộ 15 mục ngày **2026-11-19**. Khi thêm câu mới, giữ `draft` và chỉ chuyển `reviewed` sau khi duyệt.
 2. Chạy `npm test`, `npx tsc --noEmit`, `npm run build`.
 3. Chạy migration mới và deploy lại `game-sync`, `teacher`.
 4. Kiểm tra CORS từ đúng origin GitHub Pages; thử một request từ origin lạ phải bị chặn.

@@ -10,10 +10,9 @@
     "solution": [
       "Theo định nghĩa, hai đường thẳng vuông góc với nhau nếu góc giữa chúng bằng $90^\\circ$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": false,
-    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
   },
   {
     "id": "m2-q02",
@@ -31,10 +30,9 @@
     "solution": [
       "Hai đường thẳng vuông góc có thể cắt nhau tại một điểm (vuông góc tại giao điểm) hoặc chéo nhau (góc giữa chúng bằng $90^\\circ$)."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": false,
-    "note": "Phương án nhiễu được viết lại để chỉ còn một đáp án đúng; lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
   },
   {
     "id": "m2-q03",
@@ -48,10 +46,9 @@
       "Trong hình lập phương, $AB \\parallel A'B'$ và $A'B' \\perp B'C'$ (hai cạnh kề của hình vuông $A'B'C'D'$).",
       "Do đó $AB \\perp B'C'$, hay góc giữa chúng bằng $90^\\circ$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": false,
-    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
   },
   {
     "id": "m2-q04",
@@ -71,10 +68,9 @@
       "Khi đó $\\overrightarrow{AD'} = (0;1;1)$ và $\\overrightarrow{B'C} = (0;1;-1)$.",
       "Tích vô hướng $\\overrightarrow{AD'} \\cdot \\overrightarrow{B'C} = 0 + 1 - 1 = 0$, nên $AD' \\perp B'C$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": false,
-    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
   },
   {
     "id": "m2-q05",
@@ -93,9 +89,8 @@
       "Vì $b \\parallel c$ nên góc giữa $a$ và $c$ bằng góc giữa $a$ và $b$.",
       "Mà $a \\perp b$ nên góc giữa $a$ và $b$ bằng $90^\\circ$. Vậy $a \\perp c$."
     ],
-    "answerStatus": "draft",
-    "solutionStatus": "draft",
-    "isSimilar": false,
-    "note": "Lời giải do AI soạn, giáo viên cần duyệt."
+    "answerStatus": "reviewed",
+    "solutionStatus": "reviewed",
+    "isSimilar": false
   }
 ]

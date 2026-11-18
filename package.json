@@ -7,8 +7,8 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "test": "node --test tests/data.test.mjs tests/engine.test.mjs",
-    "test:watch": "node --test --watch tests/data.test.mjs tests/engine.test.mjs"
+    "test": "node --test tests/data.test.mjs tests/engine.test.mjs tests/review.test.mjs",
+    "test:watch": "node --test --watch tests/data.test.mjs tests/engine.test.mjs tests/review.test.mjs"
   },
   "dependencies": {
     "@fontsource/be-vietnam-pro": "^5.2.6",

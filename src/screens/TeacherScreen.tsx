@@ -16,6 +16,8 @@ import type {
   TeacherStudentRow,
 } from "../lib/models";
 import { questionLabel } from "../game/catalog";
+import { loadBank } from "../game/bank";
+import { countDraftQuestions } from "../game/review";
 import { missionMeta } from "../game/levels";
 import { resultLabel } from "../game/engine";
 import { formatDateTime, formatDuration, formatPercent, timeAgo } from "../lib/format";
@@ -115,11 +117,31 @@ export function TeacherScreen({ onBack }: Props) {
   const [detail, setDetail] = useState<TeacherStudentDetail | null>(null);
   const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [draftCount, setDraftCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (session) void loadDashboard(session.token);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!session) {
+      setDraftCount(null);
+      return;
+    }
+    let cancelled = false;
+    void Promise.all([loadBank(1), loadBank(2)])
+      .then(([level1, level2]) => {
+        if (!cancelled) setDraftCount(countDraftQuestions([level1, level2]));
+      })
+      .catch(() => {
+        // Không đọc được ngân hàng thì không hiện số liệu duyệt sai.
+        if (!cancelled) setDraftCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   function expire(message: string) {
     clearTeacherSession();
@@ -303,12 +325,13 @@ export function TeacherScreen({ onBack }: Props) {
                 {error}
               </p>
             )}
-            {dashboard?.answerReviewRequired && (
+            {(draftCount ?? 0) > 0 && (
               <p className="rounded-lg border border-gold-400/30 bg-gold-400/10 px-3 py-2 text-xs leading-relaxed text-gold-200">
-                ⚠️ Đáp án và lời giải hiện đang ở trạng thái <strong>tạm (draft)</strong>. Giáo viên cần duyệt lại
-                trước khi dùng chính thức.
+                ⚠️ Còn <strong>{draftCount} câu draft</strong>. Đáp án/lời giải của các câu này cần được giáo viên
+                duyệt trước khi dùng chính thức.
               </p>
             )}
+            {draftCount === 0 && <p className="text-[11px] font-semibold text-mint-300">✓ Câu chưa duyệt: 0</p>}
 
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[

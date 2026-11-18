@@ -5,7 +5,7 @@ export type FigureSpec =
       mode: "angle" | "parallel" | "coincident" | "perpendicular" | "skew" | "three";
     };
 
-export type AnswerStatus = "reviewed" | "draft" | "missing";
+export type AnswerStatus = "reviewed" | "draft";
 
 export interface BankQuestion {
   id: string;

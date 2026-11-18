@@ -36,8 +36,8 @@ function isQuestion(value: unknown, level: 1 | 2): value is BankQuestion {
     question.solution.every((step) => typeof step === "string") &&
     typeof question.isSimilar === "boolean" &&
     (question.figure == null || isFigure(question.figure)) &&
-    (question.answerStatus === "reviewed" || question.answerStatus === "draft" || question.answerStatus === "missing") &&
-    (question.solutionStatus === "reviewed" || question.solutionStatus === "draft" || question.solutionStatus === "missing")
+    (question.answerStatus === "reviewed" || question.answerStatus === "draft") &&
+    (question.solutionStatus === "reviewed" || question.solutionStatus === "draft")
   );
 }
 

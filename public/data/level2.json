@@ -4,7 +4,6 @@
     "level": 2,
     "topic": "hai-duong-thang-vuong-goc",
     "stem": "Hai đường thẳng được gọi là vuông góc với nhau nếu góc giữa chúng bằng:",
-    "figure": { "type": "lines", "mode": "perpendicular" },
     "options": ["$0^\\circ$.", "$45^\\circ$.", "$90^\\circ$.", "$180^\\circ$."],
     "correct": 2,
     "solution": [
@@ -19,7 +18,6 @@
     "level": 2,
     "topic": "hai-duong-thang-vuong-goc",
     "stem": "Trong không gian, hai đường thẳng vuông góc với nhau có thể là hai đường thẳng:",
-    "figure": { "type": "lines", "mode": "skew" },
     "options": [
       "Chỉ cắt nhau.",
       "Chỉ chéo nhau.",

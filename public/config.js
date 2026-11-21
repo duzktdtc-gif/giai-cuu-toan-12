@@ -3,5 +3,5 @@ window.__APP_CONFIG__ = {
   // TUYỆT ĐỐI không đặt TEACHER_KEY, service_role hoặc bất kỳ secret nào ở đây.
   supabaseUrl: "https://vbptnihaubmcvclkiagp.supabase.co",
   supabaseAnonKey: "sb_publishable_dTStVWeXcPmoYMWbuI-wIw_YjgVQX65",
-  version: "2026-11-21.2",
+  version: "2026-11-21.3",
 };

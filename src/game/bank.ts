@@ -10,8 +10,8 @@ function isFigure(value: unknown): value is FigureSpec {
   if (figure.type === "cube") {
     return (
       (figure.highlight === undefined || (Array.isArray(figure.highlight) && figure.highlight.every((item) => typeof item === "string"))) &&
-      (figure.solidEdges === undefined ||
-        (Array.isArray(figure.solidEdges) && figure.solidEdges.every((item) => typeof item === "string")))
+      (figure.dashedEdges === undefined ||
+        (Array.isArray(figure.dashedEdges) && figure.dashedEdges.every((item) => typeof item === "string")))
     );
   }
   if (figure.type === "lines") {

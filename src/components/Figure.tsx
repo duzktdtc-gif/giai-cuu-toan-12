@@ -60,9 +60,12 @@ function samePair(a: [string, string], b: [string, string]): boolean {
   return (a[0] === b[0] && a[1] === b[1]) || (a[0] === b[1] && a[1] === b[0]);
 }
 
-function CubeFigure({ highlight = [], solidEdges = [] }: { highlight?: string[]; solidEdges?: string[] }) {
+function CubeFigure({ highlight = [], dashedEdges = [] }: { highlight?: string[]; dashedEdges?: string[] }) {
   const highlighted = new Set<string>();
   const endpointSet = new Set<string>();
+  const dashedPairs = dashedEdges
+    .map(parsePair)
+    .filter((pair): pair is [string, string] => Boolean(pair));
   const highlightPairs: Array<{ pair: [string, string]; hidden: boolean }> = [];
   for (const raw of highlight) {
     const pair = parsePair(raw);
@@ -72,30 +75,21 @@ function CubeFigure({ highlight = [], solidEdges = [] }: { highlight?: string[];
     endpointSet.add(pair[1]);
     highlightPairs.push({
       pair,
-      hidden: CUBE_HIDDEN.some((hidden) => samePair(hidden, pair)),
+      hidden: CUBE_HIDDEN.some((hidden) => samePair(hidden, pair)) || dashedPairs.some((dashed) => samePair(dashed, pair)),
     });
   }
-
-  const solidPairs = solidEdges
-    .map(parsePair)
-    .filter((pair): pair is [string, string] => Boolean(pair));
-  const hiddenEdges = CUBE_HIDDEN.filter(([a, b]) => !solidPairs.some((pair) => samePair(pair, [a, b])));
-  const visibleEdges = [
-    ...CUBE_VISIBLE,
-    ...solidPairs.filter((pair) => !CUBE_VISIBLE.some(([a, b]) => samePair(pair, [a, b]))),
-  ];
 
   return (
     <svg viewBox="0 0 210 176" className="h-auto w-full max-w-[260px]" role="img" aria-label="Hình lập phương minh họa">
       <title>Hình lập phương ABCD.A'B'C'D'</title>
       <g stroke="#c4b5fd" strokeWidth="1.7" strokeLinecap="round" fill="none">
-        {hiddenEdges.map(([a, b]) => {
+        {CUBE_HIDDEN.map(([a, b]) => {
           const p1 = project(a);
           const p2 = project(b);
           if (!p1 || !p2) return null;
           return <line key={`h-${a}-${b}`} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y} opacity="0.38" strokeDasharray="4 4" />;
         })}
-        {visibleEdges.map(([a, b]) => {
+        {CUBE_VISIBLE.map(([a, b]) => {
           const p1 = project(a);
           const p2 = project(b);
           if (!p1 || !p2) return null;
@@ -260,7 +254,7 @@ export function Figure({ spec, className = "" }: { spec?: FigureSpec | null; cla
   return (
     <div className={`flex justify-center rounded-xl border border-lilac-400/15 bg-ink-950/40 p-2 ${className}`}>
       {spec.type === "cube" ? (
-        <CubeFigure highlight={spec.highlight} solidEdges={spec.solidEdges} />
+        <CubeFigure highlight={spec.highlight} dashedEdges={spec.dashedEdges} />
       ) : (
         <LinesFigure mode={spec.mode} />
       )}

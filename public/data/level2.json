@@ -53,7 +53,7 @@
     "level": 2,
     "topic": "quan-he-vuong-goc-trong-lap-phuong",
     "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Khẳng định nào sau đây đúng?",
-    "figure": { "type": "cube", "highlight": ["AD'", "B'C"], "solidEdges": ["AD"] },
+    "figure": { "type": "cube", "highlight": ["AD'", "B'C"], "dashedEdges": ["AD'"] },
     "options": [
       "$AD' \\perp B'C$.",
       "$AB \\parallel AD$.",

@@ -1,5 +1,5 @@
 export type FigureSpec =
-  | { type: "cube"; highlight?: string[]; solidEdges?: string[] }
+  | { type: "cube"; highlight?: string[]; dashedEdges?: string[] }
   | {
       type: "lines";
       mode: "angle" | "parallel" | "coincident" | "perpendicular" | "skew" | "three";

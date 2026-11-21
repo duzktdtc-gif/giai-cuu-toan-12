@@ -13,7 +13,7 @@ function vertexOk(label) {
 function checkFigure(question) {
   if (!question.figure) return;
   if (question.figure.type === "cube") {
-    for (const pair of [...(question.figure.highlight ?? []), ...(question.figure.solidEdges ?? [])]) {
+    for (const pair of [...(question.figure.highlight ?? []), ...(question.figure.dashedEdges ?? [])]) {
       assert.match(pair, /^[A-D]'?[A-D]'?$/, `${question.id}: highlight ${pair} không hợp lệ`);
       const match = pair.match(/^([A-D]'?)([A-D]'?)$/);
       const left = match[1];

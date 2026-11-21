@@ -86,7 +86,7 @@
     "level": 1,
     "topic": "goc-hai-duong-thang-trong-lap-phuong",
     "stem": "Cho hình lập phương $ABCD.A'B'C'D'$. Tính góc giữa hai đường thẳng $AC$ và $A'B$.",
-    "figure": { "type": "cube", "highlight": ["AC", "A'B"] },
+    "figure": { "type": "cube", "highlight": ["AC", "A'B"], "dashedEdges": ["AC", "A'B"] },
     "options": ["$60^\\circ$.", "$45^\\circ$.", "$75^\\circ$.", "$90^\\circ$."],
     "correct": 0,
     "solution": [

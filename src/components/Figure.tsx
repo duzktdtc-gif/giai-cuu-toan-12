@@ -235,10 +235,10 @@ function LinesFigure({ mode }: { mode: Extract<FigureSpec, { type: "lines" }>["m
           <path d="m120 32 8 6-8 6" fill="none" stroke={stroke} strokeWidth="1.8" />
           <path d="m140 76 8 6-8 6" fill="none" stroke="#f6c453" strokeWidth="1.8" />
           <text x="202" y="42" {...label}>
-            a
+            b
           </text>
           <text x="84" y="18" {...label} fill="#7dd3fc">
-            b
+            a
           </text>
           <text x="202" y="86" {...label} fill="#f6c453">
             c

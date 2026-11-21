@@ -8,7 +8,11 @@ function isFigure(value: unknown): value is FigureSpec {
   if (!value || typeof value !== "object") return false;
   const figure = value as Record<string, unknown>;
   if (figure.type === "cube") {
-    return figure.highlight === undefined || (Array.isArray(figure.highlight) && figure.highlight.every((item) => typeof item === "string"));
+    return (
+      (figure.highlight === undefined || (Array.isArray(figure.highlight) && figure.highlight.every((item) => typeof item === "string"))) &&
+      (figure.solidEdges === undefined ||
+        (Array.isArray(figure.solidEdges) && figure.solidEdges.every((item) => typeof item === "string")))
+    );
   }
   if (figure.type === "lines") {
     return ["angle", "parallel", "coincident", "perpendicular", "skew", "three"].includes(String(figure.mode));

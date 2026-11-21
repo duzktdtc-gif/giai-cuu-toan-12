@@ -8,7 +8,7 @@ export const MISSIONS: MissionMeta[] = [
     title: "Màn 1",
     topic: "Góc giữa hai đường thẳng",
     description:
-      "Nhận biết góc giữa hai đường thẳng, góc trong hình lập phương. Sai một câu sẽ được làm một câu tương tự.",
+      "Nhận biết góc giữa hai đường thẳng, góc trong hình lập phương. Câu 4 và Câu 5 có câu tương tự; Câu 1-3 sai thì chuyển câu tiếp theo.",
     monsterId: "slime",
     monsterName: "Slime Góc Nhọn",
     taunt: "Ngươi có phân biệt được góc giữa hai đường thẳng không?",

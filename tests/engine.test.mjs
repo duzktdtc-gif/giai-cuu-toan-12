@@ -69,12 +69,25 @@ test("drawQuestions báo lỗi khi thiếu câu gốc", () => {
 });
 
 test("findSimilar trả về đúng câu tương tự", () => {
-  const original = bank.find((question) => question.id === "m1-q01");
+  const original = bank.find((question) => question.id === "m1-q04");
   const similar = findSimilar(bank, original.similarId);
   assert.ok(similar);
-  assert.equal(similar.id, "m1-q01s");
+  assert.equal(similar.id, "m1-q04s");
+  assert.equal(findSimilar(bank, "m1-q01"), null);
   assert.equal(findSimilar(bank, "không-tồn-tại"), null);
-  assert.equal(findSimilar(bank2, "m1-q01s"), null);
+  assert.equal(findSimilar(bank2, "m1-q04s"), null);
+});
+
+test("màn 1: câu 1-3 sai thì sang câu kế, không có bước tương tự", () => {
+  for (const id of ["m1-q01", "m1-q02", "m1-q03"]) {
+    const question = level1.find((item) => item.id === id);
+    assert.ok(question, `${id}: không tìm thấy câu`);
+    assert.equal(question.similarId, undefined, `${id}: không được có câu tương tự`);
+    assert.equal(
+      afterWrongAction({ lives: 1, isSimilarActive: false, hasSimilar: false, isLastQuestion: false }),
+      "advance",
+    );
+  }
 });
 
 test("formatClock hiển thị m:ss", () => {

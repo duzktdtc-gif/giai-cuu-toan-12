@@ -76,6 +76,7 @@ export function GameScreen({ profile, level, bank, onFinish, onQuit }: Props) {
 
   const current = similar ?? questions[mainIndex];
   const similarActive = similar !== null;
+  const hasSimilar = level === 1 && findSimilar(bank, current.similarId) !== null;
   const meta = missionMeta(level);
   const avatar = profile.avatar as Avatar;
   const isLastSlot = mainIndex + 1 >= questions.length;
@@ -285,7 +286,7 @@ export function GameScreen({ profile, level, bank, onFinish, onQuit }: Props) {
     const action = afterWrongAction({
       lives: statsRef.current.lives,
       isSimilarActive: similarActive,
-      hasSimilar: level === 1 && Boolean(current.similarId) && Boolean(findSimilar(bank, current.similarId)),
+      hasSimilar,
       isLastQuestion: mainIndex + 1 >= questions.length,
     });
     if (action === "finish_lose") finish("lose_lives");
@@ -314,7 +315,7 @@ export function GameScreen({ profile, level, bank, onFinish, onQuit }: Props) {
   }
 
   const reviewButtonLabel =
-    stats.lives <= 0 ? "Xem kết quả" : similarActive ? "Câu tiếp theo" : level === 1 && current.similarId ? "Làm câu tương tự" : "Câu tiếp theo";
+    stats.lives <= 0 ? "Xem kết quả" : similarActive ? "Câu tiếp theo" : hasSimilar ? "Làm câu tương tự" : "Câu tiếp theo";
 
   return (
     <NightScene className="min-h-dvh">
@@ -511,7 +512,7 @@ export function GameScreen({ profile, level, bank, onFinish, onQuit }: Props) {
                 <p className="mt-1.5 text-center text-[11px] text-lilac-300/60">
                   {similarActive
                     ? "Câu tương tự thay cho câu gốc vừa sai. Làm xong sẽ chuyển câu tiếp theo."
-                    : level === 1 && current.similarId
+                    : hasSimilar
                       ? `Câu mới cùng dạng. Còn ${stats.lives} trái tim.`
                       : `Còn ${stats.lives} trái tim. Chuyển sang câu tiếp theo.`}
                 </p>

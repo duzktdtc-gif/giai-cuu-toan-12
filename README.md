@@ -16,7 +16,7 @@ Game web **mobile-first** ôn tập hình học không gian lớp 12 theo phong 
 - 4 đáp án được xáo trộn lại mỗi lần hiển thị; nhãn A–D gán lại sau khi xáo.
 - **2 trái tim**. Sai lần thứ hai là thua.
 - Đồng hồ **5 phút** cho cả lượt, tính bằng mốc `Date.now()` để không lệch khi tab chạy nền; đổi màu khi còn dưới 60 giây.
-- **Màn 1**: sai câu gốc → xem đáp án/lời giải → làm một **câu tương tự**. Câu tương tự đúng được tính là đã qua câu gốc đó. Câu tương tự sai → mất thêm một trái tim. Câu tương tự không bao giờ được rút làm câu chính.
+- **Màn 1**: Câu 4 và Câu 5 có câu tương tự; Câu 1–3 không có. Sai Câu 1–3 → xem đáp án/lời giải → sang câu kế. Sai Câu 4/5 → xem đáp án/lời giải → làm **câu tương tự**; câu tương tự đúng được tính là đã qua câu gốc đó, sai thì mất thêm một trái tim. Câu tương tự không bao giờ được rút làm câu chính.
 - **Màn 2**: không có câu tương tự. Sai → xem đáp án/lời giải (nếu có) → sang câu kế.
 - Thắng khi trả lời xong 5 câu gốc trong thời gian và còn ít nhất 1 trái tim.
 - Thua khi hết 2 trái tim hoặc hết giờ. Màn thua hiện đúng câu:
@@ -61,7 +61,7 @@ Game web **mobile-first** ôn tập hình học không gian lớp 12 theo phong 
 .
 ├── public/
 │   ├── config.js                 # URL + publishable key, nạp lúc chạy
-│   ├── data/level1.json          # 5 câu gốc + 5 câu tương tự
+│   ├── data/level1.json          # 5 câu gốc + 2 câu tương tự
 │   ├── data/level2.json          # 5 câu gốc, không có câu tương tự
 │   └── .nojekyll
 ├── src/
@@ -221,7 +221,8 @@ Không cần khai báo `VITE_SUPABASE_*` trong GitHub Actions. Cấu hình Supab
 - Mỗi lượt: 5 câu gốc, 2 trái tim, 5 phút.
 - Đúng → quái vật mất máu, sang câu kế.
 - Sai → mất 1 trái tim, xem đáp án + lời giải.
-  - Màn 1: làm câu tương tự. Đúng câu tương tự → qua câu gốc đó; sai → mất thêm tim.
+  - Màn 1, Câu 1–3: sang câu kế.
+  - Màn 1, Câu 4–5: làm câu tương tự. Đúng câu tương tự → qua câu gốc đó; sai → mất thêm tim.
   - Màn 2: sang câu kế.
 - Hết 2 trái tim → thua vì hết mạng.
 - Hết 5 phút → thua vì hết giờ.
@@ -261,20 +262,21 @@ Yêu cầu ban đầu ghi “khoảng 45 mục”, nhưng file Word thực tế 
 - **Màn 1:** 5 câu gốc + 2 câu tương tự có sẵn (của Câu 4 và Câu 5) = **7 mục**.
 - **Màn 2:** 5 câu gốc, không có câu tương tự = **5 mục**.
 
-Tổng cộng **12 mục từ file** (10 câu gốc + 2 câu tương tự). Để Màn 1 có đủ câu tương tự cho cả 5 câu gốc, bản này bổ sung **3 câu tương tự nháp** cho Câu 1-3. Ngân hàng hiện tại:
+Tổng cộng **12 mục** (10 câu gốc + 2 câu tương tự). Ngân hàng hiện tại:
 
-- `public/data/level1.json`: **10 câu** = 5 gốc + 5 tương tự.
+- `public/data/level1.json`: **7 câu** = 5 gốc + 2 tương tự (Câu 4 và Câu 5).
 - `public/data/level2.json`: **5 câu** = 5 gốc.
 
 ### Đáp án và lời giải
 
-- Toàn bộ 15 mục đã được giáo viên duyệt ngày **2026-11-19**: `answerStatus: "reviewed"` và `solutionStatus: "reviewed"`.
-- Màn 1 có lời giải cho cả 5 câu gốc và 5 câu tương tự; Màn 2 có lời giải ngắn cho cả 5 câu.
+- Toàn bộ 12 mục đã được giáo viên duyệt ngày **2026-11-19**: `answerStatus: "reviewed"` và `solutionStatus: "reviewed"`.
+- Màn 1 có lời giải cho 5 câu gốc và 2 câu tương tự; Màn 2 có lời giải ngắn cho cả 5 câu.
 - Câu mới thêm phải bắt đầu ở trạng thái `draft` cho cả đáp án và lời giải; chỉ chuyển sang `reviewed` sau khi giáo viên duyệt.
 
 ### Lịch sử duyệt nội dung
 
-- **2026-11-19:** giáo viên duyệt toàn bộ 15 mục (10 mục Màn 1, 5 mục Màn 2); cả `answerStatus` và `solutionStatus` chuyển thành `reviewed`.
+- **2026-11-19:** giáo viên duyệt toàn bộ 12 mục (7 mục Màn 1, 5 mục Màn 2); cả `answerStatus` và `solutionStatus` chuyển thành `reviewed`.
+- **2026-11-21:** bỏ hình minh họa của Câu 1–3 và bỏ 3 câu tương tự của Câu 1–3 để khớp file Word; Câu 1–3 sai thì chuyển thẳng sang câu kế.
 - `m1-q04` từng được thay phương án nhiễu **"AB và CC'"** bằng **"AB và A'C"** để chỉ còn một đáp án đúng.
 - `m2-q02` từng được viết lại các phương án nhiễu (chỉ cắt nhau / chỉ chéo nhau / cắt nhau hoặc chéo nhau / song song) để chỉ còn một đáp án đúng.
 
@@ -303,9 +305,9 @@ Quy tắc:
 
 - Đúng **4 đáp án**, không trùng nhau, `correct` là chỉ số 0–3.
 - `id` duy nhất trong màn.
-- Câu gốc Màn 1 phải có `similarId` trỏ tới một câu `isSimilar: true` cùng màn.
+- Câu gốc Màn 1 chỉ có `similarId` khi có câu tương tự; hiện Câu 4 và Câu 5 có tương tự, Câu 1–3 không.
 - Câu tương tự không được có `similarId` và không bao giờ được rút làm câu chính.
-- Hình minh họa dùng `type: "cube"` với `highlight` là các cặp đỉnh, hoặc `type: "lines"` với `mode` (`angle`, `parallel`, `coincident`, `perpendicular`, `skew`, `three`).
+- Hình minh họa là tùy chọn. Dùng `type: "cube"` với `highlight` là các cặp đỉnh (thêm `dashedEdges` nếu muốn nét đứt), hoặc `type: "lines"` với `mode` (`angle`, `parallel`, `coincident`, `perpendicular`, `skew`, `three`).
 - Câu mới thêm mặc định `answerStatus: "draft"` và `solutionStatus: "draft"`.
 - Chỉ chuyển `draft` → `reviewed` sau khi giáo viên duyệt nội dung tương ứng. Khi còn ít nhất một câu draft, dashboard tự hiện cảnh báo; khi tất cả đã reviewed, cảnh báo tự ẩn và mục “Câu chưa duyệt” hiện `0`.
 - Chạy `npm test` sau khi sửa; test sẽ kiểm tra cấu trúc, trạng thái duyệt, đáp án trùng, mã LaTeX sót lại và liên kết câu tương tự.
@@ -323,7 +325,7 @@ npm run build
 `npm test` dùng `node --test` với 3 file:
 
 - `tests/data.test.mjs`: đếm câu gốc/tương tự, kiểm tra 4 đáp án khác nhau, đáp án đúng, trạng thái duyệt chỉ nhận `draft` hoặc `reviewed`, lời giải Màn 1, liên kết `similarId`, hình SVG hợp lệ, không còn `\item`, `\textbf`, `\end{center}`, “Chọn A”...
-- `tests/engine.test.mjs`: xáo đáp án, rút 5 câu gốc, không rút câu tương tự, đồng hồ, thông điệp thua, sai 2 lần là thua, Màn 1 đi qua câu tương tự, Màn 2 không có bước tương tự, hết giờ kể cả khi đang xem lời giải nếu `PAUSE_TIMER=false`.
+- `tests/engine.test.mjs`: xáo đáp án, rút 5 câu gốc, không rút câu tương tự, đồng hồ, thông điệp thua, sai 2 lần là thua, Màn 1 Câu 1–3 sai thì sang câu kế, Màn 1 Câu 4–5 đi qua câu tương tự, Màn 2 không có bước tương tự, hết giờ kể cả khi đang xem lời giải nếu `PAUSE_TIMER=false`.
 - `tests/review.test.mjs`: chỉ câu còn `draft` mới cần duyệt; cảnh báo hiện khi có ít nhất một câu draft và ẩn khi tất cả đã `reviewed`.
 
 Không cần cài thêm framework test.
@@ -362,7 +364,7 @@ Không thu thập email, số điện thoại, vị trí, cookie quảng cáo ha
 ## 11. Hạn chế đã biết
 
 - Màn 1 hiện chỉ có đúng 5 câu gốc, nên mỗi lượt dùng cả 5; chỉ thứ tự câu và thứ tự đáp án thay đổi. Muốn đa dạng hơn cần thêm câu gốc vào JSON.
-- Mỗi câu gốc Màn 1 có đúng một câu tương tự.
+- Chỉ Câu 4 và Câu 5 của Màn 1 có câu tương tự; Câu 1–3 không có.
 - Chưa có tài khoản học sinh; hai học sinh trùng tên trong cùng lớp sẽ chung hồ sơ.
 - Chưa có rate limiting cho `game-sync` và `teacher`.
 - Chưa có test E2E tự động; test hiện tập trung vào dữ liệu và logic thuần.
@@ -373,7 +375,7 @@ Không thu thập email, số điện thoại, vị trí, cookie quảng cáo ha
 
 ## 12. Checklist trước khi bàn giao
 
-1. Giáo viên đã duyệt toàn bộ 15 mục ngày **2026-11-19**. Khi thêm câu mới, giữ `draft` và chỉ chuyển `reviewed` sau khi duyệt.
+1. Giáo viên đã duyệt toàn bộ 12 mục ngày **2026-11-19**. Khi thêm câu mới, giữ `draft` và chỉ chuyển `reviewed` sau khi duyệt.
 2. Chạy `npm test`, `npx tsc --noEmit`, `npm run build`.
 3. Chạy migration mới và deploy lại `game-sync`, `teacher`.
 4. Kiểm tra CORS từ đúng origin GitHub Pages; thử một request từ origin lạ phải bị chặn.

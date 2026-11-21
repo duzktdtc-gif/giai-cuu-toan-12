@@ -36,9 +36,18 @@ test("đếm đúng số câu gốc / câu tương tự", () => {
   const l2Similar = level2.filter((question) => question.isSimilar);
 
   assert.equal(l1Original.length, 5);
-  assert.equal(l1Similar.length, 5);
+  assert.equal(l1Similar.length, 2);
   assert.equal(l2Original.length, 5);
   assert.equal(l2Similar.length, 0);
+});
+
+test("màn 1: câu 1-3 không có hình và không có câu tương tự", () => {
+  for (const id of ["m1-q01", "m1-q02", "m1-q03"]) {
+    const question = level1.find((item) => item.id === id);
+    assert.ok(question, `${id}: không tìm thấy câu`);
+    assert.equal(question.figure, undefined, `${id}: không được có hình`);
+    assert.equal(question.similarId, undefined, `${id}: không được có câu tương tự`);
+  }
 });
 
 test("mỗi câu có đúng 4 đáp án khác nhau và một đáp án đúng", () => {
@@ -78,11 +87,13 @@ test("câu tương tự trỏ đúng và không dùng làm câu gốc", () => {
         assert.equal(similar.level, question.level, `${question.id}: câu tương tự khác màn`);
         assert.equal(similar.similarId, undefined, `${question.id}: câu tương tự không được có similarId`);
       }
-      if (!question.isSimilar && question.level === 1) {
-        assert.ok(question.similarId, `${question.id}: câu gốc màn 1 phải có câu tương tự`);
-      }
     }
   }
+  const l1WithSimilar = level1
+    .filter((question) => !question.isSimilar && question.similarId)
+    .map((question) => question.id)
+    .sort();
+  assert.deepEqual(l1WithSimilar, ["m1-q04", "m1-q05"], "chỉ câu 4 và câu 5 có câu tương tự");
   assert.equal(level2.every((question) => !question.similarId), true, "màn 2 không có câu tương tự");
 });
 
